@@ -1,0 +1,1038 @@
+from src.variables import AudioVar, DatasetVar, DatabaseVar
+
+import src.spotify1 as spotify
+from src.mysql import mysql as mysql
+import src.network as net
+
+import os
+import src.audio as audio
+import src.model as mod
+import src.visual as vis
+from tqdm import tqdm
+from random import choices
+import numpy as np
+from datetime import datetime
+
+path_temp_mp3 = AudioVar.path_temp_mp3
+
+from src.config import client_id,client_secret, redirect_uri
+
+
+
+
+songs_table = DatabaseVar.songs_table
+markets = ['ES', 'US', 'SE','DZ','EG','MA','ZA','TN','BH','HK','IN','IL','JP','JO','KW','LB','MY','OM','PS',
+'QA','SA','SG','TW','TH','AE','VN','AD','AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU',
+'IS','IE','IT','LV','LI','LT','LU','MT','MC','NL','NO','PL','PT','RO','SK','CH','TR','GB','RU',
+'BY','KZ','MD','UA','AL','BA','HR','ME','MK','RS','SI','XK','CA','CR','DO','SV','GT','HN','MX','NI','PA'
+,'AR','BO','BR','CL','CO','EC','PY','PE','UY','AU','NZ']
+model = mod.import_model(AudioVar.model_path)
+
+
+
+
+def get_artist_albums_id(self, data):
+    
+    '''
+    data = user.get_artist_albums_json(artist_id)
+
+
+    '''
+    albums_id = []
+    
+    for album in data:
+        albums_id.append(album['id'])
+        
+    return albums_id
+
+
+
+
+
+
+
+def get_info_song(data, file_path):
+
+
+    '''
+    data = my_spot._get_json_song(song_id)
+
+    '''
+    
+    
+    
+    song_dict = {}
+
+    artist_song_list = []
+    
+    song_dict['song_id'] = data['id']
+    song_dict['name'] = data['name'][0:100].replace('%','') #limited to 100 characters
+    
+    song_dict['album_id'] = data['album']['id']
+    song_dict['is_playable'] = data.get('is_playable',0)
+    song_dict['popularity'] = data['popularity']
+    
+    
+    song_dict['preview_url'] = data['preview_url']
+    
+    mp3_link = data['preview_url']
+
+    ## algunas veces no hay link
+
+    #print('a',mp3_link,data['id'])
+    song_dict ['mfccs'], mfccs_array = get_mfccs(mp3_link, file_path)
+
+    preds = mod.get_prediction_prob(model, mfccs_array)
+    genre = mod.find_genre_max(preds)
+    encoded_preds = mod.encode_prediction_prob(preds)
+
+    song_dict['genre_model'] = genre
+    song_dict['model_pred'] = encoded_preds
+
+
+
+
+    for song in data['artists']:
+        artist_song_list.append({'artist_id' : song['id'], 'song_id': data['id']})
+
+
+    
+    return song_dict, artist_song_list
+
+
+def get_mfccs(mp3_link, file_path):
+    
+    audio._create_mp3_file(mp3_link, file_path) #this creates mp3 file
+    
+    mfccs_array = audio._extract_mfccs(file_path)
+    
+    mfccs = audio.encode_mfccs(mfccs_array)
+    
+    os.remove(file_path) #deleting used mp3 file
+    
+    
+    return mfccs, mfccs_array
+
+
+def insert_song_data(headers, song_id, col_name = 'song_id'):
+
+    table_name = songs_table
+    
+    
+    if mysql.check_in_table(table_name,col_name, song_id):
+        
+        pass
+    else:
+        data = spotify._get_json_song(headers,song_id)
+
+        
+
+        if (data['preview_url'] is None):
+            print('Preview url null. Finding through markets a previeuw url')
+            for country in markets:
+                print(f'Trying {country}')
+                data = spotify._get_json_song(headers, song_id, country)
+                if not (data['preview_url'] is None):
+                    print('Preview url found', data['preview_url'])
+
+                    break
+                else:
+                    pass
+
+                if (data['preview_url'] is None): #if it is still none
+                    return False
+
+
+
+        data['id'] = song_id #this change needed to solve problem with ids non playalbe and relinked. with this solution we may have same songs with two entries with different ids          
+
+
+        data, data2 = get_info_song(data, path_temp_mp3)
+        mysql.insert_mysql('songs',data)
+
+        for item in data2: #this inserts tinto artist_song all rows
+            mysql.insert_mysql('artist_song',item)
+
+
+
+def get_all_artists_id(self, playlist_id):
+
+    songs_num = 100 #for first round
+    offset = 0
+    artists_id_list = []
+
+    while songs_num == 100:
+
+        data = self.spotify.get_playlist_items_json(playlist_id, offset = offset)['items']
+        
+        artists_id_list.extend(self.get_artists_ids_from_json(data))
+
+        songs_num = len(data)
+        
+        offset += songs_num #this is to know if new round moving offset is needed
+
+    artists_id_list = list(set(artists_id_list))
+
+    return artists_id_list
+
+def get_artists_ids_from_json(self, data):
+
+    temp_list = []
+
+    for song in data:
+        artist_id = song['track']['artists'][0]['id'] #for database collection we track only first artist to get top tracks
+        temp_list.append(artist_id)
+        
+        
+    return temp_list
+
+def get_songs_ids_from_json(self, data):
+
+    temp_list = []
+
+    for song in data:
+        song_id = song['track']['id'] #for database collection we track only first artist to get top tracks
+        temp_list.append(song_id)
+        
+        
+    return temp_list
+
+
+def get_artist_top_tracks_ids(self, data):
+
+    top_songs_id = []
+    
+    for song in data['tracks']:
+        
+        top_songs_id.append(song['id'])
+        
+    return top_songs_id
+
+
+
+def create_dataset_genre_by_top_tracks(self, playlist_id, genre):
+
+    table_name = self.songs_table
+    
+    artist_list = self.get_all_artists_id(playlist_id)
+
+
+    for artist in tqdm(artist_list):
+        
+        data = self.spotify.get_artist_top_tracks_json(artist)
+        song_list = self.get_artist_top_tracks_ids(data)
+        
+        for song in tqdm(song_list):
+
+            if self.mysql.check_in_table(table_name, 'song_id', song):
+                pass
+            else:
+                self.insert_song_data(song) #this inserts song into mysql with data
+                self.mysql.update_database(table_name, 'song_id', 'genre', song, genre)
+
+
+def create_dataset_genre_by_songs(self, playlist_id, genre):
+
+    table_name = self.songs_table
+    
+    songs_list = self.get_all_song_ids_playlist(playlist_id)
+
+    for song in tqdm(songs_list):
+
+        if self.mysql.check_in_table(table_name, 'song_id', song):
+            pass
+        else:
+            self.insert_song_data(song) #this inserts song into mysql with data
+            self.mysql.update_database(table_name, 'song_id', 'genre', song, genre)
+
+
+def get_all_song_ids_playlist(self, playlist_id):
+
+    songs_num = 100 #for first round
+    offset = 0
+    songs_id_list = []
+
+    while songs_num == 100:
+
+        data = self.spotify.get_playlist_items_json(playlist_id, offset = offset)['items']
+        
+        songs_id_list.extend(self.get_songs_ids_from_json(data))
+
+        songs_num = len(data)
+        
+        offset += songs_num #this is to know if new round moving offset is needed
+
+    songs_id_list = list(set(songs_id_list))
+
+    return songs_id_list
+
+
+def get_my_full_top_50(headers):
+    
+    '''
+    Creates a dictionary with the scores of all songs in the top_50 lists of a user for short, mid and long term.
+    Args:
+    
+    Returns:
+        top_songs_dict(dict): key are songs ids. Values are the score based on its appearance in those lists
+
+    
+    '''
+    
+    short_term_50 = spotify.get_top_50('short_term', headers)
+    medium_term_50 = spotify.get_top_50('medium_term', headers)
+    long_term_50 = spotify.get_top_50('long_term', headers)
+    
+    top_songs_dict = {}
+    
+    
+    
+    sum_list = short_term_50 + medium_term_50 + long_term_50
+    
+    sum_list = set(sum_list)
+    
+    for song in sum_list:
+        
+        score = 0
+        factor_long = 1
+        factor_medium = 1
+        factor_short = 1
+        
+        if song in long_term_50:
+            pos=long_term_50.index(song)
+            score += (100 - pos) * factor_long
+        
+        if song in medium_term_50:
+            pos = medium_term_50.index(song)
+            score += (100 - pos) * factor_medium
+            
+        if song in short_term_50:
+            pos = short_term_50.index(song)
+            score += (100 - pos) * factor_short
+            
+        top_songs_dict[song] = score
+        
+    top_songs_dict = {key:value for key,value in sorted(top_songs_dict.items(), key = lambda x:x[1], reverse = True)}
+        
+    return top_songs_dict
+
+
+
+
+def collect_my_user_profile(headers):
+    '''
+    Collects userful profile information about the user 
+
+
+    '''
+    temp_dict_user = {}
+    temp_list_top_songs = []
+
+    data = spotify.get_my_user_info(headers)
+
+    user_id = data['id']
+    user_country = data['country']
+    user_name = data['display_name']
+    user_num_followers = data['followers']['total']
+    try:
+        user_img_url = data['images'][0]['url'] #Keep first image
+
+    except IndexError:
+        user_img_url ='../img/profile_none.png'
+    
+    finally:
+
+        top50 = get_my_full_top_50(headers)
+
+
+        temp_dict_user = {'user_id': user_id,
+                    'name' : user_name ,
+                    'country': user_country,
+                    'num_followers': user_num_followers,
+                    'img_url' : user_img_url,
+                    }
+
+        for key, value in top50.items():
+            temp_list_top_songs.append({'user_id': user_id, 'song_id': key, 'song_score': value})
+
+
+        #top artists ################
+
+        temp_list_top_artists = spotify.get_user_top_artist(headers)
+
+        return temp_dict_user, temp_list_top_songs, temp_list_top_artists
+
+
+def update_user_profile_data(headers):
+
+
+    #aquí falta desarollar top artistas !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+    user_profile, user_top_songs, user_top_artists = collect_my_user_profile(headers)
+
+    user_id = user_profile['user_id']
+    table_name = DatabaseVar.user_table
+    main_col = 'user_id'
+
+    
+
+    ##Update users table
+
+    if mysql.check_in_table(table_name, main_col, user_id):
+
+        for key, value in user_profile.items():
+            if key != 'user_id':
+                mysql.update_database(table_name, main_col, key, user_id, value)
+            else:
+                pass
+    else:
+        mysql.insert_mysql(table_name, user_profile)
+
+    ##### Update user_artist table  #############################
+    
+    
+    if mysql.check_in_table('user_artist', 'user_id', user_id):
+        mysql.delete_where('user_artist', user_id, 'user_id') #delete
+    else:
+        pass
+
+    new = False
+
+    for artist in user_top_artists:
+
+        if not mysql.check_in_table('artist', 'artist_id', artist): #check if artist in artist table
+            print(f"{artist} not in database")
+            tmp_dict = get_info_artist(artist, headers)
+            mysql.insert_mysql('artist', tmp_dict) #inserted into mysql table artist
+            data = spotify.get_artist_related(artist, headers).get('artists') #list of artist related
+
+            for element in data: #for each artist related
+                id_tmp = element['id']
+                tmp_dict = {'main_id': artist, 'rel_id': id_tmp}
+                mysql.insert_mysql('artist_rel', tmp_dict)
+
+            new = True #to know if a new user were introduced to update network community
+        else:
+            pass
+
+        data  = {'user_id': user_id, 'artist_id': artist}
+        mysql.insert_mysql('user_artist', data)
+
+    if new: #this means new artist has been found, then we need to update G network
+        
+        net.create_community() #this update should not be a proble with checking has_node in network
+  
+
+    ##Update users_songs table
+
+    table_name = DatabaseVar.user_songs_table
+    main_col = 'user_id'
+
+    if mysql.check_in_table(table_name, main_col, user_id): #if user in table, delete to update later
+        mysql.delete_where(table_name, user_id, main_col) #delete
+    else:
+        pass
+    
+    for song in user_top_songs:
+
+        res = True
+
+        #here !!!!! first check if song in songs database, if not then get data 
+        if not mysql.check_in_table(songs_table, 'song_id', song['song_id']): #check if song in songs_table
+
+            print(f"{song['song_id']} not in database")
+            res = insert_song_data(headers, song['song_id']) #insert song to database
+
+            
+        else: #if exists then
+            pass #do nothing
+
+
+        if res == False: #it did not find preview url then abort inclusion
+            continue
+
+
+        table_name = DatabaseVar.user_songs_table
+        mysql.insert_mysql(table_name, song) #Now we add all info
+
+
+    
+
+    return user_profile, user_top_songs
+
+
+def calc_user_profile_genre(user_info):
+
+    
+
+    user_genres_list = [row[0] for row in user_info] #needed to get rid of dummy tuples from mysql 
+
+
+    genre_list = DatasetVar.genre_list
+
+    user_genre_dict = {genre : user_genres_list.count(genre)  for genre in genre_list}
+
+    return user_genre_dict
+
+
+
+def pick_genre(user_genre_dict):
+
+    genres = list(user_genre_dict.keys())
+    weights =  list(user_genre_dict.values())
+    genre_picked = choices(genres,  weights = weights)[0]
+
+    return genre_picked
+
+def pick_song(user_array, genre):
+
+    temp_array = keep_genre_songs(user_array, genre)
+
+    songs = temp_array[:,0] #songs in first column
+
+
+    weights =  temp_array[:,1].astype(int) #songs popularity in second column
+
+
+    try:
+        song_picked = choices(songs,  weights = weights)[0]
+    except IndexError:
+        return None
+
+    return song_picked
+
+def find_songs_playlist(user1, user2):
+
+    num_songs = 40 #to be modifieeddddddddddddddddddddddddddddddddddddddddddddd
+
+    my_playlist = []
+    output_txt = []
+
+    ######## COMMON SONGS ############################
+    songs_match_top = [row[0] for row in list(mysql.songs_match_between_users(user1, user2, 'user_song', num_songs))]
+
+    my_playlist.extend(songs_match_top)
+
+    for song in my_playlist:
+        song_name = list(mysql.get_name_song(song))[0][0] #this could be refactorize and get from previous request to mysql
+        output_txt.append(f'{song_name} selected due to match in TOP songs')
+
+    ### COMMON RESPECT TO ARTIST ###########################
+
+    matches_artist1 = find_matches_by_artist_for_playlist(user1, user2)
+    for match in matches_artist1:
+        my_playlist.append(match[2])
+        output_txt.append(f'{match[1]} by {match[0]} selected from {user2} songs due to match in Top artist of {user1}')
+
+
+    matches_artist2 = find_matches_by_artist_for_playlist(user2, user1)
+    for match in matches_artist2:
+        my_playlist.append(match[2])
+        output_txt.append(f'{match[1]} by {match[0]} selected from {user1} songs due to match in Top artist of {user2}')
+
+    
+
+
+    user1_genre_profile = np.array(list(mysql.find_user_all_songs_genre(user1)))
+    user1_genre_profile = calc_user_profile_genre(user1_genre_profile)  
+
+    user2_genre_profile = np.array(list(mysql.find_user_all_songs_genre(user2)))
+    user2_genre_profile = calc_user_profile_genre(user2_genre_profile)  
+
+
+
+    user1_info = np.array(list(mysql.find_user_all_songs_ids(user1)))
+    user2_info = np.array(list(mysql.find_user_all_songs_ids(user2)))
+
+
+    user1_remain = remove_match_song(user1_info, songs_match_top)
+    user2_remain = remove_match_song(user2_info, songs_match_top)
+    
+    count =0
+    
+    while len(my_playlist) < num_songs:
+        if count % 2 == 0:
+
+            my_playlist, output_txt, user2_remain, check = pick_genre_song_and_include(user1_genre_profile, user2_remain, my_playlist, output_txt)
+        else:
+            my_playlist, output_txt, user1_remain, check = pick_genre_song_and_include(user2_genre_profile, user1_remain, my_playlist, output_txt)
+
+        if check:
+            pass
+        else:
+            return my_playlist, output_txt
+
+        count += 1
+
+    return my_playlist, output_txt
+
+
+
+
+def pick_genre_song_and_include(genre_profile, songs_array, my_playlist, output_txt):
+
+    try_count = 0
+
+    song_selected = None
+
+    while (song_selected is None):
+
+        try_count += 1
+        genre_selected = pick_genre(genre_profile) #new genre picked
+        song_selected = pick_song(songs_array, genre_selected)
+
+        if try_count == 5:
+            return my_playlist, output_txt, songs_array, False
+
+
+    my_playlist.append(song_selected)
+    print(song_selected, songs_array)
+    songs_array = remove_match_song(songs_array, [song_selected]) # no need to go through all songs selected, just the one recently picked
+    print(song_selected, songs_array)
+    song_name = list(mysql.get_name_song(song_selected))[0][0]
+
+    user_id = songs_array[0,3]
+    output_txt.append(f'{song_name} selected as {genre_selected} song in {user_id} TOP songs')
+
+
+
+    return my_playlist, output_txt, songs_array, True
+
+
+
+        
+def get_index_array(array, value):
+
+    i =  np.where(array ==value)[0][0]
+    
+
+    return i
+
+def remove_match_song(array, songs, col = 0):
+
+    ids = array[:,col]
+    
+
+    i_list = [get_index_array(ids, song) for song in songs ]
+
+    array = np.delete(array, i_list, 0)
+
+    return array
+
+def keep_genre_songs(array, genre):
+
+    i_list = np.where(array ==genre)[0]
+
+    array = array[i_list]
+
+    return array
+
+    
+
+
+
+
+
+
+
+
+def prepare_input_to_model(self):
+
+    data = self.mysql.get_info_for_model() 
+
+    X, y = mod.decode_input_model(data)
+
+
+
+    X_train, y_train, X_val, y_val, X_test, y_test = mod.split_train_val_test(X, y)
+
+    return X_train, y_train, X_val, y_val, X_test, y_test
+
+
+def retrieve_mfccs_song(self, song_id):
+
+    #maybe not in use at the end
+
+    table_name = self.songs_table
+
+
+    ret = self.mysql.get_mysql_mfccs_song(table_name,song_id)
+    ret = list(ret.fetchone())[0]
+    mfcc_decoded = audio.decode_mfccs(ret, AudioVar.n_mfcc)
+
+    return mfcc_decoded
+
+
+def update_predictions_database(self):
+
+    data = np.array(list(self.mysql.get_all_songs('songs')))
+
+    for song in data:
+        song_id = song[0]
+
+        mfcc_decoded = audio.decode_mfccs(song[1], AudioVar.n_mfcc)
+
+        preds = mod.get_prediction_prob(self.model, mfcc_decoded)
+
+        genre = mod.find_genre_max(preds)
+
+        encoded_preds = mod.encode_prediction_prob(preds)
+
+        self.mysql.update_prediction(genre, encoded_preds, song_id)
+
+
+def create_mix_playlist(user1, user2, headers):
+    song_id_list, txt_output = find_songs_playlist(user1, user2)
+
+    data = spotify.create_playlist(user1,user1,user2, headers)
+
+    playlist_id = data['id']
+
+    spotify.add_songs_to_playlist(playlist_id, song_id_list, headers)
+    create_output_file(user1, txt_output)
+
+    return txt_output
+
+
+
+
+
+
+def create_output_file(user1, txt_output):
+
+    now = datetime.now()
+    dt_string = now.strftime("%d_%m_%Y_%H_%M_%S")
+
+    file_name = f'{user1}_mix_tape_{dt_string}'
+
+    
+
+    f = open(f'./output/{file_name}.txt','w')
+    txt_output = map(lambda x : x+'\n', txt_output)
+    f.writelines(txt_output)
+    f.close()
+
+    
+
+
+
+def get_chart_genres(user1, user2 = -1):
+    
+    #this can be improved by Objects!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    user1_genre_profile = np.array(list(mysql.find_user_all_songs_genre(user1)))
+    user1_genre_profile = calc_user_profile_genre(user1_genre_profile)  
+    categories =  list(user1_genre_profile.keys())
+    user1_values = [value / sum(list(user1_genre_profile.values())) for value in list(user1_genre_profile.values())]
+
+    if user2 == -1 :
+        fig = vis.draw_starplot(categories, user1_values)
+        similarity = -1
+    else:
+
+        user2_genre_profile = np.array(list(mysql.find_user_all_songs_genre(user2)))
+        user2_genre_profile = calc_user_profile_genre(user2_genre_profile)
+        user2_values = [value / sum(list(user2_genre_profile.values())) for value in list(user2_genre_profile.values())]
+
+        fig = vis.draw_starplot(categories, user1_values, user2_values)
+
+        similarity = vis.find_similarity(user1_values,user2_values)
+
+    return fig, similarity
+
+    
+
+   
+   
+
+
+def scrape_artists(self, seed_artist = None):
+
+
+
+    mysql_list = list(self.mysql.get_info_for_model('artist', 'artist_id', 'artist_id'))
+    mysql_list = [ele[0] for ele in mysql_list]
+
+    if seed_artist == None:
+        artist_list = list(self.mysql.get_info_for_model('artist', 'artist_id', 'artist_id'))
+
+        artist_list = [ele[0] for ele in artist_list]
+    else: 
+        artist_list = [seed_artist]
+
+
+    count = 0
+
+    for artist in tqdm(artist_list):
+
+        try:
+
+            if self.mysql.check_in_table('artist','artist_id', artist):
+                print('artist already in data')
+            else:
+                tmp_dict = self.get_info_artist(artist)
+                self.mysql.insert_mysql('artist', tmp_dict) #inserted into mysql table artist
+
+            
+
+            data = self.spotify.get_artist_related(artist).get('artists') #list of artist related
+
+            if data is None:
+                print(f'{artist} data not found.')
+                continue
+
+            if self.mysql.check_in_table('artist_rel','main_id', artist):
+                insert = False
+            else:
+                insert = True
+
+            for element in data:
+                id_tmp = element['id']
+                if not self.mysql.check_in_table('artist','artist_id', id_tmp):
+                    artist_list.append(id_tmp)
+                else:
+                    pass
+
+                if insert:
+                    tmp_dict = {'main_id': artist, 'rel_id': id_tmp}
+                    self.mysql.insert_mysql('artist_rel', tmp_dict)
+                else:
+                    pass
+            
+            count += 1
+
+            if count % 500 == 0:
+                print(len(artist_list))
+                print(artist)
+
+        except:
+            print(f'there was some error with {artist}. Going to next')
+
+
+
+
+
+def get_info_artist(artist_id, headers):
+
+    data = spotify.get_artist_info(artist_id, headers)
+
+    tmp_dict = {}
+
+    tmp_dict['artist_id'] = artist_id
+    tmp_dict['name'] = data['name'][0:100]
+    tmp_dict['popularity'] = data['popularity']
+    tmp_dict['followers'] = data['followers']['total']
+
+    try:
+        tmp_dict['img_url'] = data['images'][0]['url']
+    except IndexError:
+        tmp_dict['img_url'] = ''
+
+
+    return tmp_dict
+
+
+def get_all_users(user1):
+
+    users= list(mysql.find_all_users())
+
+    users =[user[0] for user in users if user1 not in user[0]]
+
+    return users
+
+
+def fetch_user2_profile(user):
+
+    user_data = list(mysql.fetch_user(user))[0]
+
+    temp_dict_user = {'user_id': user_data[0],
+            'name' : user_data[1] ,
+            'country': user_data[2],
+            'num_followers': user_data[3],
+            'img_url' : user_data[4],
+            }
+
+
+
+    return temp_dict_user
+
+
+def get_info_distances_between_users(user1, user2):
+
+    G = net.load_community()
+
+    user1_artists = [item[0] for item in list(mysql.fetch_user_artists(user1)) if net.check_if_in_G(G,item[0])]
+    user2_artists = [item[0] for item in list(mysql.fetch_user_artists(user2)) if net.check_if_in_G(G,item[0])]
+    
+    distances = []
+    min_distance = 100000 #dummy large value
+    min_path = []
+    for artist in user1_artists:
+        for rel_artist in user2_artists:
+            distance = net.shortest_path_len(G, artist, rel_artist)
+            distances.append(distance)
+            if distance < min_distance:
+                min_distance = distance
+                min_path = net.shortest_path(G,  artist, rel_artist)
+            else:
+                pass
+
+    avg_distance = round(np.mean(distances),1)
+
+    return avg_distance, min_distance, min_path
+
+            
+
+
+
+
+def get_info_distances_artist_ref(user):
+
+    G = net.load_community()
+
+    
+    user_artists = [item[0] for item in list(mysql.fetch_user_artists(user)) if net.check_if_in_G(G,item[0])] #this is to avoid take into account artist which are not connected to community
+    
+    user_artists = sorted(user_artists, key = lambda x: net.shortest_path_len(G, x))
+    
+    distances = [net.shortest_path_len(G, artist)   for artist in user_artists]
+    avg_distance = round(np.mean(distances),1)
+
+    min_distance = distances[0]
+
+    min_path = net.shortest_path(G, user_artists[0])
+
+    return avg_distance, min_distance, min_path
+
+
+def find_matches_by_artist_for_playlist(user1, user2):
+
+    res = list(mysql.find_artist_in_other_songs(user1, user2))
+
+    tmp_keywords = []
+    clean_list_songs = [] #for no duplicates
+    for item in res:
+         keyword = item[0]+item[1]
+         if keyword not in tmp_keywords:
+             clean_list_songs.append([item[0], item[1], item[2]])
+             tmp_keywords.append(keyword)
+
+    return clean_list_songs
+
+
+def get_rating_popu_user(user):
+
+    songs = list(mysql.fetch_popularity(user))
+    avg_pop = round(np.mean([song[1] for song in songs]),0)
+
+    #con posibilidad de poder devolver el mayor popular
+    return avg_pop
+    
+
+
+
+             
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+
+            
+
+
+
+
+
+
+
+
+            
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+        
+
+       
+
+        
+
+  
+
+
+
+    
+
+        
+
+    
+
+
+
+
+
+
+
+
+      
+
+
+
+
+        
+
+
+
+
+
+                
+      
+
+    
+
+    
+
+    
+
+
+
+
+    
+
+
+
+    

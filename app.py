@@ -91,17 +91,28 @@ def intro():
 
     avg_distance, min_distance, path_distance = dataset.get_info_distances_artist_ref(user_id)
 
+    ##### Popularity ########################
+
+    avg_popularity = dataset.get_rating_popu_user(user_id)
+
+
+    #### Musical Age ############################
+
+    avg_age = dataset.get_years_user(user_id)
 
 
 
 
 
-    session['main_user'] = {'id': user_id, 'name': user_name, 'img_url': user_img }
+
+
+
+    session['main_user'] = {'id': user_id, 'name': user_name, 'img_url': user_img, 'avg_dis': avg_distance, 'min_dis': min_distance, 'path_dis': path_distance, 'avg_popu': avg_popularity, 'avg_age': avg_age  }
 
 
 
     
-    return render_template('intro.html', user_id = user_id, user_name = user_name, user_img = user_img, fig = encoded, other_users = other_users)
+    return render_template('stats.html', user_profile = session['main_user'], user_id = user_id, user_name = user_name, user_img = user_img, fig = encoded, other_users = other_users)
 
 
 @app.route('/compare')
@@ -142,6 +153,48 @@ def playlist():
     txt_output = dataset.create_mix_playlist(main_user_id, secon_user_id, headers)
 
     return render_template('playlist.html', txt_output = txt_output)
+
+
+@app.route('/select_members')
+def select_members():
+
+    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+
+    main_user_id = session.get('main_user').get('id')
+
+    other_users_info = enumerate(dataset.get_other_users_info(main_user_id))
+
+
+    return render_template('select_members.html', other_users_info = other_users_info)
+
+
+@app.route('/party', methods = ['POST'])
+def party():
+
+    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+
+    main_user_id = session.get('main_user').get('id')
+
+    members = request.form.getlist('member')
+
+    members.insert(0, main_user_id)
+
+    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+    num_songs = 50 # to be changeedeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+
+    song_id_list, url_playlist = dataset.create_mix_playlist(headers, num_songs, members)
+
+    info_playlist = dataset.collect_info_new_playlist(headers, song_id_list)
+
+
+
+
+
+
+
+
+
+    return render_template('party.html', url_playlist = url_playlist, info_playlist = info_playlist)
 
 
 

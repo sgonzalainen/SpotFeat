@@ -1,4 +1,4 @@
-from src.variables import AudioVar, DatasetVar, DatabaseVar
+from src.variables import AudioVar, DatasetVar, DatabaseVar, ScoringVar
 
 import src.spotify1 as spotify
 from src.mysql import mysql as mysql
@@ -12,6 +12,8 @@ from tqdm import tqdm
 from random import choices
 import numpy as np
 from datetime import datetime
+import pandas as pd
+import re
 
 path_temp_mp3 = AudioVar.path_temp_mp3
 
@@ -150,8 +152,20 @@ def insert_song_data(headers, song_id, col_name = 'song_id'):
         data, data2 = get_info_song(data, path_temp_mp3)
         mysql.insert_mysql('songs',data)
 
-        for item in data2: #this inserts tinto artist_song all rows
+        new = False
+
+        for item in data2: #this inserts into artist_song all rows
             mysql.insert_mysql('artist_song',item)
+
+            if mysql.check_in_table('artist','artist_id', item['artist_id']):
+                pass
+            else:
+                insert_new_artist(headers, artist)#check if artist in artist table
+                new = True #to know if a new user were introduced to update network community
+
+        if new: #this means new artist has been found, then we need to update G network
+        
+            net.create_community() #this update should not be a proble with checking has_node in network
 
 
 
@@ -400,16 +414,7 @@ def update_user_profile_data(headers):
     for artist in user_top_artists:
 
         if not mysql.check_in_table('artist', 'artist_id', artist): #check if artist in artist table
-            print(f"{artist} not in database")
-            tmp_dict = get_info_artist(artist, headers)
-            mysql.insert_mysql('artist', tmp_dict) #inserted into mysql table artist
-            data = spotify.get_artist_related(artist, headers).get('artists') #list of artist related
-
-            for element in data: #for each artist related
-                id_tmp = element['id']
-                tmp_dict = {'main_id': artist, 'rel_id': id_tmp}
-                mysql.insert_mysql('artist_rel', tmp_dict)
-
+            insert_new_artist(headers, artist)
             new = True #to know if a new user were introduced to update network community
         else:
             pass
@@ -460,6 +465,21 @@ def update_user_profile_data(headers):
     return user_profile, user_top_songs
 
 
+
+def insert_new_artist(headers, artist):
+    print(f"{artist} not in database")
+    tmp_dict = get_info_artist(artist, headers)
+    mysql.insert_mysql('artist', tmp_dict) #inserted into mysql table artist
+    data = spotify.get_artist_related(artist, headers).get('artists') #list of artist related
+
+    for element in data: #for each artist related
+        id_tmp = element['id']
+        tmp_dict = {'main_id': artist, 'rel_id': id_tmp}
+        mysql.insert_mysql('artist_rel', tmp_dict)
+
+    
+
+
 def calc_user_profile_genre(user_info):
 
     
@@ -499,6 +519,131 @@ def pick_song(user_array, genre):
         return None
 
     return song_picked
+
+
+def find_songs_playlist(num_songs, users):
+
+    pool_songs = find_pool_songs(users)
+    df = create_structure_score_table(pool_songs, users)
+    df = add_score_song_playlist(df)
+
+    df_selected = df.groupby('song_id').sum().sort_values('total_points',ascending=False).reset_index().head(num_songs)
+
+
+    return df, df_selected
+
+
+def get_list_selected_songs(num_songs, users):
+    df, df_selected = find_songs_playlist(num_songs, users)
+
+    return list(df_selected.song_id)
+
+
+
+
+
+
+
+def add_score_song_playlist(df):
+    df['top_song_points'] = df.apply(get_score_by_top_song, axis = 1)
+    df['top_artist_points'] = df.apply(get_score_by_top_artist, axis = 1)
+    df['popularity_points'] = df.apply(get_score_popularity, axis = 1)
+    df['genre_points'] = df.apply(get_score_genre, axis = 1)
+
+
+    df['total_points'] = df['top_song_points'] + df['top_artist_points'] + df['popularity_points'] + df['genre_points']
+
+
+
+    return df
+
+
+def get_score_genre(row):
+
+    match = list(mysql.find_genre_song(row['song_id']))
+    genre = match[0][0]
+
+    user_genre_profile = np.array(list(mysql.find_user_all_songs_genre(row['user_id'])))
+    user_genre_profile = calc_user_profile_genre(user_genre_profile)
+    user_genre_profile = {key : value / sum(list(user_genre_profile.values())) for key, value in list(user_genre_profile.items())}
+
+    factor = user_genre_profile[genre]
+
+    return int(ScoringVar.genre * factor)
+
+
+def get_score_popularity(row):
+
+    match = list(mysql.fetch_column_table_where('songs','popularity', 'song_id', row['song_id']))
+
+    return match[0][0]
+
+
+
+
+
+def get_score_by_top_song(row):
+
+    match = list(mysql.fetch_score_user_top_song(row['user_id'], row['song_id']))
+
+    if len(match) > 0:
+        return match[0][0]
+    else:
+        return 0
+
+def get_score_by_top_artist(row):
+
+    match = list(mysql.check_song_artist_top(row['user_id'], row['song_id']))
+
+    if len(match) > 0:
+        return ScoringVar.top_artist
+
+    else:
+        return 0
+
+
+
+
+
+def create_structure_score_table(pool_songs, users):
+
+    column_songs = []
+    column_user = []
+
+    for user in users:
+
+        column_songs.extend(pool_songs)
+
+        list_user  = [user] * len(pool_songs)
+        column_user.extend(list_user)
+
+    data = {'user_id': column_user, 'song_id': column_songs}
+    df = pd.DataFrame(data)
+
+    return df
+
+
+
+
+
+
+def find_pool_songs(users):
+
+    all_songs = []
+    for user in users:
+        fetch = list(mysql.fetch_column_table_where('user_song','song_id','user_id',user))
+        all_songs.extend([item[0] for item in fetch])
+
+    return list(set(all_songs))
+
+
+
+
+
+
+
+
+'''
 
 def find_songs_playlist(user1, user2):
 
@@ -565,7 +710,7 @@ def find_songs_playlist(user1, user2):
 
     return my_playlist, output_txt
 
-
+'''
 
 
 def pick_genre_song_and_include(genre_profile, songs_array, my_playlist, output_txt):
@@ -680,6 +825,23 @@ def update_predictions_database(self):
         self.mysql.update_prediction(genre, encoded_preds, song_id)
 
 
+
+def create_mix_playlist(headers, num_songs, users):
+    song_id_list = get_list_selected_songs(num_songs, users)
+
+    data = spotify.create_playlist(headers, users)
+    playlist_id = data['id']
+    spotify.add_songs_to_playlist(playlist_id, song_id_list, headers)
+
+    url_playlist = data['external_urls'].get('spotify')
+
+    return song_id_list, url_playlist
+
+
+
+
+
+'''
 def create_mix_playlist(user1, user2, headers):
     song_id_list, txt_output = find_songs_playlist(user1, user2)
 
@@ -692,7 +854,7 @@ def create_mix_playlist(user1, user2, headers):
 
     return txt_output
 
-
+'''
 
 
 
@@ -932,122 +1094,82 @@ def get_years_user(user):
 
     list_dates = [item[0] for item in data]
 
+    list_ages = list(map(extract_age_date, list_dates))
 
-    pass
+    return round(np.mean(list_ages),1)
 
 def extract_age_date(date):
 
-    pass
+    year_now = datetime.now().year
 
+    pattern = r'\d{4}'
 
-    
+    try:
+        year = re.search(pattern, date).group()
+    except:
+        return np.NaN
 
+    else:
 
+        age = int(year_now - int(year))
 
-             
+        return age
 
 
 
 
+def get_other_users_info(main_user_id):
 
+    #to be developed further for similarity
 
+    other_users = get_all_users(main_user_id)
 
+    others_info = []
 
-    
+    for other in other_users:
 
+        profile = fetch_user2_profile(other)
+        name = profile.get('name')
+        img = profile.get('img_url')
 
+        if img == '':
+            img = 'https://pbs.twimg.com/media/EFIv5HzUcAAdjhl?format=png&name=360x360'
 
 
+        tmp_dict = {'name': name, 'user_id': other, 'img_url': img}
+        others_info.append(tmp_dict)
 
+    return others_info
 
 
+def collect_info_new_playlist(headers, song_id_list):
 
+    info_playlist = []
 
+    for song in song_id_list:
+        print(song)
 
+        match = list(mysql.fetch_report_song(song))[0]
 
-        
-    
 
-            
+        song_name = match[0]
+        artist_name = match[1]
+        album_name = match[2]
+        artist_img = match[3]
+        album_img = match[4]
 
+        if artist_img == '':
+            artist_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
 
+        if album_img == '':
+            album_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
 
 
+        info_song = {'song_name': song_name, 'artist_name': artist_name, 'album_name': album_name, 'artist_img': artist_img, 'album_img': album_img}
 
+        info_playlist.append(info_song)
 
 
-
-            
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-        
-
-       
-
-        
-
-  
-
-
-
-    
-
-        
-
-    
-
-
-
-
-
-
-
-
-      
-
-
-
-
-        
-
-
-
-
-
-                
-      
-
-    
-
-    
-
-    
-
-
-
-
-    
-
-
+    return info_playlist
 
     

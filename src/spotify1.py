@@ -171,17 +171,20 @@ def _get_json_song(headers, song_id, country = None):
     
     return r.json()
 
-def create_playlist(user_id, name1, name2, headers):
+def create_playlist(headers, users):
+
+    user_id = users[0]
 
     endpoint = f'https://api.spotify.com/v1/users/{user_id}/playlists'
-    
+    string = ' ft. '.join(users)
     headers['Content-Type'] = 'application/json'
 
-    playlist_name = f'Awesome Mix {name1} ft. {name2}'
+    playlist_name = f'SpotiFeat Mix {string}'
     params = {'user_id': user_id}
-    data = {'name': playlist_name, 'collaborative': False}
+    data = {'name': playlist_name, 'public': False, 'collaborative': True}
 
-    r = requests.post(endpoint, headers = headers, json = data,)
+    r = requests.post(endpoint, headers = headers, json = data)
+
 
     return r.json()
 

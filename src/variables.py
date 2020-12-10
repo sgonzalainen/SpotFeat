@@ -55,6 +55,11 @@ class Community():
 
     artist_ref_distance = 'Camela'
 
+
+class ScoringVar():
+    top_artist = 50
+    genre = 50
+
     
 
 

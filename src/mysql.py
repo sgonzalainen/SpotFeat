@@ -12,7 +12,8 @@ class MysqlConn():
         
         
         self.database = db_name
-        self.connect_mysql(user_mysql, password_mysql)
+        #self.connect_mysql(user_mysql, password_mysql)
+        #self.connect_mysql('user_mysql', 'password_mysql')
         
 
 
@@ -192,6 +193,54 @@ class MysqlConn():
         return self.conn.execute(query)
 
 
+    def fetch_column_table_where(self, table_name, column_name, where_column, value):
+        query = f"SELECT {column_name} FROM {table_name} WHERE {where_column} = '{value}';"
+
+        return self.conn.execute(query)
+
+
+
+    def fetch_score_user_top_song(self,user_id, song_id):
+
+
+        query = f"SELECT song_score FROM user_song WHERE user_id = '{user_id}' AND song_id = '{song_id}';"
+
+        return self.conn.execute(query)
+
+
+    def check_song_artist_top(self,user_id, song_id):
+
+        table1 = f"SELECT b.album_id FROM user_artist a INNER JOIN artist_album b ON a.artist_id = b.artist_id WHERE a.user_id = '{user_id}'"
+
+        table2 = f"SELECT a.album_id FROM songs a WHERE a.song_id = '{song_id}'"
+
+        query = f"SELECT * FROM ({table1}) table1 INNER JOIN ({table2}) table2 WHERE table2.album_id = table1.album_id;"
+
+        return self.conn.execute(query)
+
+
+    def find_genre_song(self, song_id):
+
+        query = f"SELECT COALESCE(a.genre, a.genre_model) FROM songs a WHERE a.song_id = '{song_id}';"
+        
+ 
+        return self.conn.execute(query)
+
+
+    def fetch_report_song(self, song_id):
+
+        query = f"SELECT a.name, c.name, d.name, c.img_url, d.img_url FROM songs a INNER JOIN artist_song b ON a.song_id = b.song_id INNER JOIN artist c ON c.artist_id = b.artist_id  INNER JOIN albums d ON d.album_id = a.album_id WHERE a.song_id = '{song_id}';"
+
+
+        return self.conn.execute(query)
+
+
+
+
+
+
+
+
 
 
 
@@ -214,6 +263,13 @@ class MysqlAdmin(MysqlConn):
         return self.conn.execute(query)
 
 
+    def fetch_artist_in_songs_null(self):
+        
+        query = f"SELECT DISTINCT(b.artist_id) FROM songs a LEFT JOIN artist_song b ON a.song_id = b.song_id LEFT JOIN artist c ON c.artist_id = b.artist_id WHERE c.artist_id IS NULL;"
+
+        return self.conn.execute(query)
+
+
 
 
 
@@ -226,13 +282,7 @@ class MysqlAdmin(MysqlConn):
     
 
 
-
-
-
-
-
-
-#mysql = MysqlConn()
+mysql = MysqlConn()
 
 
 

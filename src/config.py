@@ -1,6 +1,9 @@
 import os
 import dotenv
 
+import sys
+sys.path.append("../")
+
 dotenv.load_dotenv()
 
 client_id = os.getenv('CLIENT_ID')

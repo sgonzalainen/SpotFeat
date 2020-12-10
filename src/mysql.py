@@ -17,9 +17,11 @@ class MysqlConn():
 
 
     def connect_mysql(self, user, password):
-        
+        #this to be deleted???????????????????????
         mysql_url = f'mysql://{user}:{password}@localhost/{self.database}'
         engine = create_engine(mysql_url)
+
+        
 
         self.conn = engine.connect()
         
@@ -183,6 +185,33 @@ class MysqlConn():
 
 
 
+    def fetch_years_songs(self, user):
+
+        query = f"SELECT c.release_date, b.name FROM user_song a INNER JOIN songs b ON a.song_id = b.song_id INNER JOIN albums c ON c.album_id = b.album_id WHERE a.user_id = '{user}';"
+
+        return self.conn.execute(query)
+
+
+
+
+
+class MysqlAdmin(MysqlConn):
+    
+    
+    def __init__(self, user_mysql, password_mysql):
+        #super().__init__() 
+        
+        self.database = db_name
+        self.connect_mysql(user_mysql, password_mysql)
+        
+        
+
+
+    def fetch_album_in_songs_null(self):
+        
+        query = f"SELECT DISTINCT(a.album_id) FROM songs a LEFT JOIN albums b ON a.album_id = b.album_id WHERE b.name IS NULL;"
+
+        return self.conn.execute(query)
 
 
 
@@ -191,6 +220,8 @@ class MysqlConn():
 
 
 
+
+#mysql_admin = MysqlAdmin()
 
     
 
@@ -201,7 +232,7 @@ class MysqlConn():
 
 
 
-mysql = MysqlConn()
+#mysql = MysqlConn()
 
 
 

@@ -94,7 +94,8 @@ def update_token(refresh_token):
     
     expires_in = data['expires_in'] # seconds
     access_token_expires = now + datetime.timedelta(seconds=expires_in)
-    access_token_did_expire = expires < now
+    
+    access_token_did_expire = access_token_expires < now
     return access_token, access_token_expires
 
 
@@ -250,7 +251,10 @@ def get_artist_info(artist_id, headers):
     return r.json()
 
 
-class SpotifyAPI(object):
+
+
+class SpotifyAdmin():
+
     
 
     access_token = None
@@ -262,7 +266,7 @@ class SpotifyAPI(object):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.redirect_uri='http://localhost:5000/callback'
+        self.redirect_uri='https://www.google.com/'
         self.code=None
         self.client_id='573199737d0a4ef3ba7b6773b857456f'
         self.client_secret='5653391c69c5467e9f0ddd3885886b32'
@@ -303,9 +307,7 @@ class SpotifyAPI(object):
         
         lookup_url = f"{mother_link}?{query_params}"
         r = requests.get(lookup_url)
-
-        #here stop callback!!!????????????????
-        #webbrowser.open(lookup_url, new=1)
+        webbrowser.open(lookup_url, new=1)
       
 
         
@@ -313,20 +315,65 @@ class SpotifyAPI(object):
     def input_code(self):
         return input('Please enter code from redirected url')
     
-
+    def get_first_token(self):
+        mother_link='https://accounts.spotify.com/api/token'
+        key={'code':self.code,
+             "grant_type": "authorization_code",
+             "client_id": self.client_id,"client_secret": self.client_secret,
+             'redirect_uri':self.redirect_uri}
+        r = requests.post(mother_link,data=key)
+        
+        if r.status_code not in range(200, 299):
+            raise Exception("Could not authenticate client.")
+        else:
+            print('Correct input code')
+        
+        data = r.json()
+        now = datetime.datetime.now()
+        access_token = data['access_token']
+        expires_in = data['expires_in'] # seconds
+        refresh_token=data['refresh_token']
+        self.refresh_token=refresh_token
+        expires = now + datetime.timedelta(seconds=expires_in)
+        self.access_token = access_token
+        self.access_token_expires = expires
+        self.access_token_did_expire = expires < now
+        return access_token    
     
-
+    def update_token(self):
+        mother_link='https://accounts.spotify.com/api/token'
+        key={"grant_type": "refresh_token",
+             "client_id": self.client_id,"client_secret": self.client_secret,
+             'refresh_token':self.refresh_token}
+        r = requests.post(mother_link,data=key)  
+        data = r.json()
+        now = datetime.datetime.now()
+        access_token = data['access_token']
+        expires_in = data['expires_in'] # seconds
+        expires = now + datetime.timedelta(seconds=expires_in)
+        self.access_token = access_token
+        self.access_token_expires = expires
+        self.access_token_did_expire = expires < now
+        return access_token
         
 
     def check_auth(self):
-        #while self.code==None:
-        print('Identification is required. Please click on link below.')
-        self.get_auth()
-            #self.code=self.input_code()
-            #self.first_token=self.get_first_token()
+        while self.code==None:
+            print('Identification is required. Please click on link below.')
+            self.get_auth()
+            self.code=self.input_code()
+            self.first_token=self.get_first_token()
             
   
-
+    def get_access_token(self):
+        token = self.access_token
+        expires = self.access_token_expires
+        now = datetime.datetime.now()
+        if expires < now:
+            return self.update_token()
+        elif token == None:
+            return self.update_token()
+        return token
         
     
     def get_resource_header(self):
@@ -497,10 +544,87 @@ class SpotifyAPI(object):
         r = requests.get(endpoint,headers=headers) 
         return r.json()
     
+    def get_top_50(self, time_range, limit=50):
+        
+        '''
+        Collects user top50 spotify songs based on a given time_range.
+        Args:
+            time_range(str): Either 'short_term', 'medium_term' or 'long term'
+            limit(int): number of top song. By default,50. Spotify limits number to 50,
+            if more than 50 is required, several requests should be perform with an offset.
+            Here only 50.
+        
+        '''
+        
+        top_50_list = []
+        
+        headers = self.get_resource_header()
+        endpoint = f"https://api.spotify.com/v1/me/top/tracks"
+        
+        query_params = urlencode({"limit": limit, 'time_range': time_range})
+        lookup_url = f"{endpoint}?{query_params}"
+        
+        r = requests.get(lookup_url,headers=headers)
+        
+        data = r.json()
 
+        for pos,song in enumerate(data['items']):
+            uri_id = song['id']
+            
+
+            top_50_list.append(uri_id)
+            
+        return top_50_list
     
     
+    def get_my_full_top_50(self):
+        
+        '''
+        Creates a dictionary with the scores of all songs in the top_50 lists of a user for short, mid and long term.
+        Args:
+        
+        Returns:
+            top_songs_dict(dict): key are songs ids. Values are the score based on its appearance in those lists
 
+        
+        '''
+        
+        short_term_50 = self.get_top_50('short_term')
+        medium_term_50 = self.get_top_50('medium_term')
+        long_term_50 = self.get_top_50('long_term')
+        
+        top_songs_dict = {}
+        
+        
+        
+        sum_list = short_term_50 + medium_term_50 + long_term_50
+        
+        sum_list = set(sum_list)
+        
+        for song in sum_list:
+            
+            score = 0
+            factor_long = 1
+            factor_medium = 1
+            factor_short = 1
+            
+            if song in long_term_50:
+                pos=long_term_50.index(song)
+                score += (100 - pos) * factor_long
+            
+            if song in medium_term_50:
+                pos = medium_term_50.index(song)
+                score += (100 - pos) * factor_medium
+                
+            if song in short_term_50:
+                pos = short_term_50.index(song)
+                score += (100 - pos) * factor_short
+                
+            top_songs_dict[song] = score
+            
+        top_songs_dict = {key:value for key,value in sorted(top_songs_dict.items(), key = lambda x:x[1], reverse = True)}
+            
+        return top_songs_dict
     
     
     def get_playlist_items_json(self,playlist_id,offset=0):
@@ -520,7 +644,27 @@ class SpotifyAPI(object):
     
     
     #yes
+    def _get_json_song(self, song_id, country = None):
+        """
+        Retrieves from Spotify information related to song
+        Args:
+            song_id : Spotify song id
+        Returns (json): json with song information
+        """
+        
+        endpoint = f'https://api.spotify.com/v1/tracks/{song_id}'
+        headers = self.get_resource_header()
 
+        if country is None:
+            r = requests.get(endpoint, headers=headers)
+        else:
+            params = {'market':country}
+            r = requests.get(endpoint, headers=headers, params = params)
+
+
+        
+        
+        return r.json()
     
     
     
@@ -551,18 +695,85 @@ class SpotifyAPI(object):
         
         return r.json()
 
+    def create_playlist(self, user_id, name1, name2):
 
+        endpoint = f'https://api.spotify.com/v1/users/{user_id}/playlists'
+        headers = self.get_resource_header()
+        headers['Content-Type'] = 'application/json'
+
+        playlist_name = f'Awesome Mix {name1} ft. {name2}'
+        params = {'user_id': user_id}
+        data = {'name': playlist_name, 'collaborative': False}
+
+        r = requests.post(endpoint, headers = headers, json = data,)
+
+        return r.json()
 
  
     
     
+    def get_my_user_info(self):
+        '''
+        Retrieves from Spotify all information related to the user
+        Args:
+        
+        Returns:
+            r.json()(json file): json with all the data from Spotify 
+        '''
+        
+
+        endpoint = f'https://api.spotify.com/v1/me'
+        headers = self.get_resource_header()
+        r = requests.get(endpoint,headers=headers)
+        
+        return r.json()
 
 
+    def add_song_to_playlist(self,playlist_id, song_id_list):
+
+        #entra lista de ids a meter de golpe
+
+        endpoint = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks' 
+
+        headers = self.get_resource_header()
+        headers['Content-Type'] = 'application/json'
+
+        uris_list = list(map(lambda x: f'spotify:track:{x}', song_id_list))
+
+        data = {'uris': uris_list}
 
 
+        
+        r = requests.post(endpoint, json = data, headers = headers)
 
+        return r
 
+    def get_artist_related(self, artist_id):
 
+        endpoint = f'https://api.spotify.com/v1/artists/{artist_id}/related-artists'
+        headers = self.get_resource_header()
+
+        r = requests.get(endpoint,headers=headers)
+
+        return r.json()
+
+    def get_artist_info(self, artist_id):
+
+        endpoint = f'https://api.spotify.com/v1/artists/{artist_id}'
+        headers = self.get_resource_header()
+
+        r = requests.get(endpoint,headers=headers)
+
+        return r.json()
+
+    def get_album_info(self, album_id):
+
+        endpoint = f'https://api.spotify.com/v1/albums/{album_id}'
+        headers = self.get_resource_header()
+
+        r = requests.get(endpoint,headers=headers)
+
+        return r.json()
 
 
 

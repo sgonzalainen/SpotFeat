@@ -921,10 +921,25 @@ def find_matches_by_artist_for_playlist(user1, user2):
 def get_rating_popu_user(user):
 
     songs = list(mysql.fetch_popularity(user))
-    avg_pop = round(np.mean([song[1] for song in songs]),0)
+    avg_pop = int(np.mean([song[1] for song in songs]))
 
     #con posibilidad de poder devolver el mayor popular
     return avg_pop
+
+
+def get_years_user(user):
+    data = list(mysql.fetch_years_songs(user))
+
+    list_dates = [item[0] for item in data]
+
+
+    pass
+
+def extract_age_date(date):
+
+    pass
+
+
     
 
 

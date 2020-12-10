@@ -65,8 +65,8 @@ def intro():
 
     user_profile, user_top_songs = dataset.update_user_profile_data(headers)
 
-    #here comes new function to get popoularity rating of user
-    pop_rating = dataset.get_rating_pop_user(user_id)
+    
+    
 
 
     user_name = user_profile.get('name')
@@ -75,8 +75,8 @@ def intro():
     if user_img == '':
         user_img = 'https://pbs.twimg.com/media/EFIv5HzUcAAdjhl?format=png&name=360x360'
 
-    
-
+    #here comes new function to get popoularity rating of user
+    pop_rating = dataset.get_rating_popu_user(user_id)
 
 
     fig, similarity = dataset.get_chart_genres(user_id)

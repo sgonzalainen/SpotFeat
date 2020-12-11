@@ -72,6 +72,9 @@ def intro():
     user_name = user_profile.get('name')
     user_id = user_profile.get('user_id')
     user_img = user_profile.get('img_url')
+
+
+    ###this mostt likelty to be removedddd #####
     if user_img == '':
         user_img = 'https://pbs.twimg.com/media/EFIv5HzUcAAdjhl?format=png&name=360x360'
 
@@ -89,7 +92,7 @@ def intro():
 
     ######## Camela distance  #######
 
-    avg_distance, min_distance, path_distance = dataset.get_info_distances_artist_ref(user_id)
+    avg_distance, min_distance, path_distance, ref_artist = dataset.get_info_distances_artist_ref(user_id)
 
     ##### Popularity ########################
 
@@ -112,7 +115,7 @@ def intro():
 
 
     
-    return render_template('stats.html', user_profile = session['main_user'], user_id = user_id, user_name = user_name, user_img = user_img, fig = encoded, other_users = other_users)
+    return render_template('stats.html', user_profile = session['main_user'],ref_artist = ref_artist ,fig = encoded)
 
 
 @app.route('/compare')

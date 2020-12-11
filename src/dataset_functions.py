@@ -1,4 +1,4 @@
-from src.variables import AudioVar, DatasetVar, DatabaseVar, ScoringVar
+from src.variables import AudioVar, DatasetVar, DatabaseVar, ScoringVar, Community
 
 import src.spotify1 as spotify
 from src.mysql import mysql as mysql
@@ -14,6 +14,7 @@ import numpy as np
 from datetime import datetime
 import pandas as pd
 import re
+
 
 path_temp_mp3 = AudioVar.path_temp_mp3
 
@@ -1062,7 +1063,21 @@ def get_info_distances_artist_ref(user):
 
     min_path = net.shortest_path(G, user_artists[0])
 
-    return avg_distance, min_distance, min_path
+    min_path = list(map(extract_url_img_by_artist_name, min_path))
+
+    ref_artist = Community.artist_ref_distance #to pass to app to show in html
+
+    
+
+    return avg_distance, min_distance, min_path, ref_artist
+
+
+def extract_url_img_by_artist_name(artist_name):
+
+    artist_url = list(mysql.fetch_column_table_where('artist', 'img_url', 'name', artist_name))[0][0]
+
+
+    return {'name': artist_name, 'artist_url': artist_url}
 
 
 def find_matches_by_artist_for_playlist(user1, user2):

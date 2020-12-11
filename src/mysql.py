@@ -12,7 +12,7 @@ class MysqlConn():
         
         
         self.database = db_name
-        #self.connect_mysql(user_mysql, password_mysql)
+        self.connect_mysql(user_mysql, password_mysql)
         #self.connect_mysql('user_mysql', 'password_mysql')
         
 

@@ -65,10 +65,6 @@ def intro():
 
     user_profile, user_top_songs = dataset.update_user_profile_data(headers)
 
-    
-    
-
-
     user_name = user_profile.get('name')
     user_id = user_profile.get('user_id')
     user_img = user_profile.get('img_url')
@@ -82,40 +78,49 @@ def intro():
     pop_rating = dataset.get_rating_popu_user(user_id)
 
 
-    fig, similarity = dataset.get_chart_genres(user_id)
-    tmpfile = BytesIO()
-    fig.savefig(tmpfile, format='png')
-    encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
-
     other_users = dataset.get_all_users(user_id)
+    session['other_user'] = {'list_others': other_users}
 
 
     ######## Camela distance  #######
 
     avg_distance, min_distance, path_distance, ref_artist = dataset.get_info_distances_artist_ref(user_id)
-
     ##### Popularity ########################
 
     avg_popularity = dataset.get_rating_popu_user(user_id)
 
-
     #### Musical Age ############################
-
     avg_age = dataset.get_years_user(user_id)
 
-
-
-
-
-
-
-
     session['main_user'] = {'id': user_id, 'name': user_name, 'img_url': user_img, 'avg_dis': avg_distance, 'min_dis': min_distance, 'path_dis': path_distance, 'avg_popu': avg_popularity, 'avg_age': avg_age  }
-
+    session['ref_artist'] = ref_artist
 
 
     
-    return render_template('stats.html', user_profile = session['main_user'],ref_artist = ref_artist ,fig = encoded)
+    return render_template('intro.html')
+
+
+
+
+@app.route('/stats')
+def stats():
+
+    user_id = session['main_user'].get('id')
+
+    fig, similarity = dataset.get_chart_genres(user_id)
+    tmpfile = BytesIO()
+    fig.savefig(tmpfile, format='png')
+    encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
+
+
+
+    return render_template('stats.html', user_profile = session['main_user'],ref_artist = session['ref_artist'] ,fig = encoded)
+
+
+
+
+
+
 
 
 @app.route('/compare')
@@ -189,15 +194,20 @@ def party():
 
     info_playlist = dataset.collect_info_new_playlist(headers, song_id_list)
 
-
-
-
-
-
-
-
-
     return render_template('party.html', url_playlist = url_playlist, info_playlist = info_playlist)
+
+@app.route('/matches')
+def show_matches():
+
+
+    other_users_info = dataset.get_my_matches(session['main_user'].get('id'))
+
+    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+    
+
+    return render_template('matches.html', other_users_info = enumerate(other_users_info))
+
+    
 
 
 

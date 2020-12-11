@@ -14,6 +14,7 @@ import numpy as np
 from datetime import datetime
 import pandas as pd
 import re
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 path_temp_mp3 = AudioVar.path_temp_mp3
@@ -1018,9 +1019,8 @@ def fetch_user2_profile(user):
     return temp_dict_user
 
 
-def get_info_distances_between_users(user1, user2):
+def get_info_distances_between_users(G, user1, user2):
 
-    G = net.load_community()
 
     user1_artists = [item[0] for item in list(mysql.fetch_user_artists(user1)) if net.check_if_in_G(G,item[0])]
     user2_artists = [item[0] for item in list(mysql.fetch_user_artists(user2)) if net.check_if_in_G(G,item[0])]
@@ -1041,6 +1041,99 @@ def get_info_distances_between_users(user1, user2):
     avg_distance = round(np.mean(distances),1)
 
     return avg_distance, min_distance, min_path
+
+
+def get_my_matches(main_user):
+
+
+    other_users_info = get_other_users_info(main_user)
+
+    other_users = [other.get('user_id') for other in other_users_info]
+
+    
+
+    scores_by_distance = get_score_by_distance(main_user, other_users)
+    scores_by_genre = get_score_by_genres(main_user, other_users)
+
+    mean_score = list(map(lambda x,y: round(np.mean([x,y]) * 100 if not np.isnan(x) else y * 100, 1), scores_by_distance, scores_by_genre))
+
+    all_scores = [{'user_id': other , 'score': score} for other, score in zip(other_users,mean_score) ]
+
+    #just to be sure dictioanries are in same order. this could be optimized
+    for other in other_users_info:
+        for score in all_scores:
+            if score['user_id'] == other['user_id']:
+                other['score'] = score['score']
+                break
+            else:
+                pass
+    
+
+
+
+
+    
+
+    other_users_info= sorted(other_users_info, reverse = True, key = lambda x: float(x.get('score')))
+
+    
+
+    return other_users_info
+
+
+
+
+def get_score_by_genres(main_user, other_users):
+
+
+    main_user_profile = np.array(list(mysql.find_user_all_songs_genre(main_user)))
+    main_user_profile = [list(calc_user_profile_genre(main_user_profile).values())]
+
+    others_profiles = []
+    for other in other_users:
+        other_user_profile = np.array(list(mysql.find_user_all_songs_genre(other)))
+        other_user_profile = list(calc_user_profile_genre(other_user_profile).values())
+        others_profiles.append(other_user_profile)
+
+    scores = cosine_similarity(main_user_profile,others_profiles)[0] 
+
+
+
+    return scores
+
+    
+
+
+
+def get_score_by_distance(main_user, other_users):
+
+    G = net.load_community()
+
+    info_distances = []
+    for other in other_users:
+        avg_distance, min_distance, min_path = get_info_distances_between_users(G, main_user, other)
+
+        tmp_dict = {'user_name': other, 'avg_distance':avg_distance, 'min_distance': min_distance, 'min_path':min_path }
+        info_distances.append(tmp_dict)
+
+        
+
+    df = pd.DataFrame(info_distances)
+    scores = list(df.avg_distance.rank(ascending = False, pct=True))
+
+    return scores
+
+
+
+
+
+    
+
+
+
+
+
+
 
             
 

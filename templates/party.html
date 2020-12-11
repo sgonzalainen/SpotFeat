@@ -5,198 +5,30 @@
 
     </head>
         <style>
-            .center {
-            margin: 0;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            -ms-transform: translate(-50%, -50%);
-            transform: translate(-50%, -50%);
+
+            th {
+                text-align :"left";
             }
 
 
-
-            .dropbtn {
-            background-color: #1DB954;
-            color: white;
-            padding: 5px;
-            font-size:30px;
-            font-weight: bold;
-            font-family: Gotham;
-            width: 150px;
-            border: none;
-            }
-
-            .dropdown {
-            position: relative;
-            display: inline-block;
-            }
-
-            .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #f1f1f1;
-            font-family: Gotham;
-            font-weight: bold;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            }
-
-            .dropdown-content a {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            }
-
-            .dropdown-content a:hover {background-color: #ddd;}
-            .dropdown:hover .dropdown-content {display: block;}
-            .dropdown:hover .dropbtn {background-color: #3e8e41;}
-
-
-
-            /* Create three unequal columns that floats next to each other */
-            .column {
-            float: left;
-            padding: 10px;
-             /* Should be removed. Only for demonstration */
-            }
-
-            .left, .right {
-            width: 35%;
-            }
-
-            .middle {
-            width: 30%;
-            }
-
-            /* Clear floats after the columns */
-            .row:after {
-            content: "";
-            display: table;
-            clear: both;
-            }
-
-            /* https://codepen.io/echosoft/pen/RaVEvG */
-            ul {
-            list-style-type: none;
-            }
-
-            li {
-            display: inline-block;
-            }
-
-            input[type="checkbox"] {
-            display: none;
-            visibility: hidden;
-            opacity: 0;
-            width:0;
-            height: 0;
-            }
-
-            label {
-            border: 0px solid #fff;
-            padding: 0px;
-            display: block;
-            position: relative;
-            margin: 10px;
-            cursor: pointer;
-            }
-
-            label:before {
-            background-color: white;
-            color: white;
-            content: " ";
-            display: block;
-            border-radius: 50%;
-            border: 1px solid grey;
-            position: absolute;
-            top: -5px;
-            left: -5px;
-            width: 25px;
-            height: 25px;
-            text-align: center;
-            line-height: 28px;
-            transition-duration: 0.4s;
-            transform: scale(0);
-            }
-
-            label img {
-            height: 150px;
-            width: 150px;
-            transition-duration: 0.2s;
-            transform-origin: 50% 50%;
-            }
-
-            :checked + label {
-            border-color: #ddd;
-            }
-
-            :checked + label:before {
-            content: "✓";
-            background-color: green;
-            transform: scale(1.1);
-            }
-
-            :checked + label img {
-            transform: scale(0.8);
-            /* box-shadow: 0 0 5px #333; */
-            z-index: -1;
-            }
-
-            table {
-            margin: 5px;
-            border-spacing: 30px 0px;
-            }
-
-            .scrollit {
-                overflow:scroll;
-                height:800px;
-                /*width:60%; */
-            }
-
-            .column {
-            float: left;
-            padding: 10px;
-            
-            }
-
-            .left {
-            width: 30%;
-            }
-
-            .right {
-            width: 100%;
-            }
-
-
-
-
-
-            }
-
-            
-
-
-
+    
 
 
         </style>
 
-    <style>
-        .text_white {
-        color: white;
-        }
 
-    </style>
+{% extends "parent.html" %}
+{% block content %}
+    
+<section style= "text-align: center; padding-top: 150px;padding-bottom: 50px;">
 
 
-    <h1 style="color:#FFFFFF";>
+
+    <h4 style="color:#FFFFFF";>
             
         Congratulations... here you have your awesome playlist!
 
-    </h1>
+    </h4>
 
     <div class="column left" >
 
@@ -228,12 +60,12 @@
                 <div class="scrollit">
         <table style='width:100% border="2"'>
             <tr>
-              <th align ="left"></th>
-              <th align="left">Title</th>
-              <th align="left">Artist</th>
-              <th align="left"></th>
-              <th align="left">Album</th>
-              <th align="left"></th>
+              <th ></th>
+              <th >Title</th>
+              <th ></th>Artist</th>
+              <th ></th>
+              <th >Album</th>
+              <th ></th>
             </tr>
 
             {% for item in info_playlist %}
@@ -259,8 +91,8 @@
 
     </div>
 
-
-
+</section>
+    {% endblock %}
 
 
 

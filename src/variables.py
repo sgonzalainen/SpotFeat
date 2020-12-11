@@ -55,6 +55,8 @@ class Community():
 
     artist_ref_distance = 'Camela'
 
+    penalty_not_path = 15
+
 
 class ScoringVar():
     top_artist = 50

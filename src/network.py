@@ -25,8 +25,19 @@ def load_community():
 
 def shortest_path_len(G, main_artist, ref_artist = Community.artist_ref_distance):
 
+    try:
+        return nx.shortest_path_length(G, source = main_artist,target = ref_artist)
 
-    return nx.shortest_path_length(G, source = main_artist,target = ref_artist)
+    except:
+        return Community.penalty_not_path ##penalty for not having connection
+
+
+
+    
+
+
+
+    
 
 
 def shortest_path(G, main_artist, ref_artist = Community.artist_ref_distance):

@@ -1280,4 +1280,25 @@ def collect_info_new_playlist(headers, song_id_list):
 
     return info_playlist
 
+
+def genre_profile_api(user_id):
+
+    user_profile = np.array(list(mysql.find_user_all_songs_genre(user_id)))
+    user_profile = calc_user_profile_genre(user_profile)
+
+    genre_list = list(user_profile.keys())
+    values_list = list(user_profile.values())
+
+    user_list = [ {'genre': key, 'value': value} for key, value in user_profile.items()]  #for JS file
+
+
+
+
+    return genre_list, values_list
+
+
+    
+
+
+
     

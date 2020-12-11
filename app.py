@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, session, redirect
+from flask import Flask, request, render_template, session, redirect, jsonify
 from src.spotifyAPI import SpotifyAPI
 import time
 #from flask_session import Session
@@ -113,8 +113,13 @@ def stats():
     encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
 
 
+    genre_list, values_list = dataset.genre_profile_api(user_id)
 
-    return render_template('stats.html', user_profile = session['main_user'],ref_artist = session['ref_artist'] ,fig = encoded)
+    print(genre_list, values_list)
+
+
+
+    return render_template('stats.html', user_profile = session['main_user'],ref_artist = session['ref_artist'] ,chart_labels = genre_list, chart_values= values_list,fig = encoded)
 
 
 
@@ -206,6 +211,21 @@ def show_matches():
     
 
     return render_template('matches.html', other_users_info = enumerate(other_users_info))
+
+
+
+@app.route('/get_genre_profile/<user_id>')
+def get_profile_api(user_id):
+
+    return jsonify(dataset.genre_profile_api(user_id))
+
+
+
+
+
+
+
+
 
     
 

@@ -6,8 +6,31 @@
     </head>
         <style>
 
-            th {
-                text-align :"left";
+     
+
+            table {
+            margin: 5px;
+            border-spacing: 30px 10px;
+            }
+
+            .scrollit {
+                overflow:scroll;
+                height:800px;
+                /*width:60%; */
+            }
+
+            .column {
+            float: left;
+            padding: 10px;
+
+            }
+
+            .left {
+            width: 30%;
+            }
+
+            .right {
+            width: 100%;
             }
 
 
@@ -61,10 +84,10 @@
         <table style='width:100% border="2"'>
             <tr>
               <th ></th>
-              <th >Title</th>
-              <th ></th>Artist</th>
+              <th style= "text-align: left;">Title</th>
+              <th style= "text-align: left;">Artist</th>
               <th ></th>
-              <th >Album</th>
+              <th style= "text-align: left;">Album</th>
               <th ></th>
             </tr>
 
@@ -72,10 +95,10 @@
 
             <tr>
             <td>{{ loop.index }}</td>
-              <td>{{item.song_name}}</td>
-              <td>{{item.artist_name}}</td>
+              <td style= "text-align: left;"> {{item.song_name}}</td>
+              <td style= "text-align: left;">{{item.artist_name}}</td>
               <td><img src="{{item.artist_img}}" width="50" /></td>
-              <td>{{item.album_name}}</td>
+              <td style= "text-align: left;">{{item.album_name}}</td>
               <td><img src="{{item.album_img}}" width="50"/></td>
             </tr>
 

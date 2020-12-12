@@ -254,6 +254,16 @@ def get_artist_info(artist_id, headers):
     return r.json()
 
 
+def get_album_info(headers, album_id):
+
+        endpoint = f'https://api.spotify.com/v1/albums/{album_id}'
+
+        r = requests.get(endpoint,headers=headers)
+
+        return r.json()
+
+
+
 
 
 class SpotifyAdmin():

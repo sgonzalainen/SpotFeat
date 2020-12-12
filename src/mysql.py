@@ -233,6 +233,12 @@ class MysqlConn():
 
         return self.conn.execute(query)
 
+    def fetch_album_in_songs_null(self):
+        
+        query = f"SELECT DISTINCT(a.album_id) FROM songs a LEFT JOIN albums b ON a.album_id = b.album_id WHERE b.name IS NULL;"
+
+        return self.conn.execute(query)
+
 
 
 
@@ -255,11 +261,7 @@ class MysqlAdmin(MysqlConn):
         
 
 
-    def fetch_album_in_songs_null(self):
-        
-        query = f"SELECT DISTINCT(a.album_id) FROM songs a LEFT JOIN albums b ON a.album_id = b.album_id WHERE b.name IS NULL;"
-
-        return self.conn.execute(query)
+    
 
 
     def fetch_artist_in_songs_null(self):

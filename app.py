@@ -132,12 +132,17 @@ def stats():
 @app.route('/users/<user_id>')
 def user_stats(user_id):
 
-
+    main_user = session['main_user'].get('id')
 
     user_profile = dataset.get_full_info_user(user_id)
 
     avg_popularity = dataset.get_rating_popu_user(user_id)
-    avg_distance, min_distance, path_distance, ref_artist = dataset.get_info_distances_artist_ref(user_id)
+
+    avg_distance, min_distance, path_distance = dataset.get_info_distances_between_users(main_user, user_id)
+
+    path_distance = list(map(dataset.extract_url_img_by_artist_name, path_distance))
+
+    #avg_distance, min_distance, path_distance, ref_artist = dataset.get_info_distances_artist_ref(user_id)
     avg_age = dataset.get_years_user(user_id)
 
 
@@ -163,7 +168,7 @@ def user_stats(user_id):
 
 
 
-    return render_template('other_stats.html', main_user_profile = session['main_user'], user_profile = user_profile,ref_artist = ref_artist , chart_labels = genre_list, chart_values= values_list)
+    return render_template('other_stats.html', main_user_profile = session['main_user'], user_profile = user_profile, chart_labels = genre_list, chart_values= values_list)
 
 
 @app.route('/select_members')

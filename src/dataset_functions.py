@@ -162,12 +162,9 @@ def insert_song_data(headers, song_id, col_name = 'song_id'):
             if mysql.check_in_table('artist','artist_id', item['artist_id']):
                 pass
             else:
-                insert_new_artist(headers, artist)#check if artist in artist table
+                insert_new_artist(headers, item['artist_id'])#check if artist in artist table
                 new = True #to know if a new user were introduced to update network community
 
-        if new: #this means new artist has been found, then we need to update G network
-        
-            net.create_community() #this update should not be a proble with checking has_node in network
 
 
 
@@ -424,9 +421,9 @@ def update_user_profile_data(headers):
         data  = {'user_id': user_id, 'artist_id': artist}
         mysql.insert_mysql('user_artist', data)
 
-    if new: #this means new artist has been found, then we need to update G network
+    
         
-        net.create_community() #this update should not be a proble with checking has_node in network
+        
   
 
     ##Update users_songs table
@@ -460,6 +457,11 @@ def update_user_profile_data(headers):
 
         table_name = DatabaseVar.user_songs_table
         mysql.insert_mysql(table_name, song) #Now we add all info
+
+
+    update_albums_table_missing(headers) #this checks if new albums have been introduced and scrapes data
+
+    net.create_community() #always update at every login. This could be optimized if new artist found by top artist or artist in top songs. Not that "easy" to do if in new songs , therefore we create community every time
 
 
     
@@ -978,6 +980,8 @@ def get_info_artist(artist_id, headers):
 
     data = spotify.get_artist_info(artist_id, headers)
 
+    print(data)
+
     tmp_dict = {}
 
     tmp_dict['artist_id'] = artist_id
@@ -1019,7 +1023,10 @@ def fetch_user2_profile(user):
     return temp_dict_user
 
 
-def get_info_distances_between_users(G, user1, user2):
+def get_info_distances_between_users(user1, user2):
+
+
+    G = net.load_community()
 
 
     user1_artists = [item[0] for item in list(mysql.fetch_user_artists(user1)) if net.check_if_in_G(G,item[0])]
@@ -1107,11 +1114,11 @@ def get_score_by_genres(main_user, other_users):
 
 def get_score_by_distance(main_user, other_users):
 
-    G = net.load_community()
+    
 
     info_distances = []
     for other in other_users:
-        avg_distance, min_distance, min_path = get_info_distances_between_users(G, main_user, other)
+        avg_distance, min_distance, min_path = get_info_distances_between_users(main_user, other)
 
         tmp_dict = {'user_name': other, 'avg_distance':avg_distance, 'min_distance': min_distance, 'min_path':min_path }
         info_distances.append(tmp_dict)
@@ -1330,6 +1337,31 @@ def get_my_trending(headers):
         info_trending.append(info_song)
 
     return info_trending
+
+
+def update_albums_table_missing(headers):
+
+    albums_to_scrape = [album[0] for album in list(mysql.fetch_album_in_songs_null())]
+
+    for album in albums_to_scrape:
+
+        data = spotify.get_album_info(headers,album)
+
+        album_dict = {}
+        album_dict['album_id'] = album
+        album_dict['name'] = data['name'].replace('%','')[0:100]
+        album_dict['type'] = data['type']
+        album_dict['popularity'] = data['popularity']
+        album_dict['release_date'] = data['release_date']
+        try:
+            album_dict['img_url'] = data.get('images')[0].get('url')
+        except IndexError:
+            album_dict['img_url'] = ''
+
+        mysql.insert_mysql('albums',album_dict)
+
+        for artist in data['artists']:
+            mysql.insert_mysql('artist_album',{'artist_id' : artist['id'], 'album_id': album})
 
 
 

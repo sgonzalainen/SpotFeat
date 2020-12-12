@@ -181,7 +181,7 @@
 
             /* Caption text */
             .text {
-            background-color: green;
+            background-color: #1DB954;
             color: #f2f2f2;
             font-size: 30px;
             padding: 8px 12px;
@@ -240,6 +240,31 @@
             }
 
 
+            hr.new {
+            border: 1px solid #1DB954;
+            border-radius: 1px;
+            margin: 0px 70px;
+            }
+
+            canvas{
+            margin: 0 auto;
+            }
+
+            table.center {
+            margin-left:auto; 
+            margin-right:auto;
+            text-align: left;
+        }
+
+
+        span.funstat {
+            font-size: 30px;
+            color: #1DB954;
+            
+            }
+
+
+
        
 
 
@@ -253,34 +278,10 @@
 
 
 
-    <body style="background-color:#000000; color: white; font-family: Gotham;
-    font-weight: bold;">
 
-<main>
+{% extends "parent.html" %}
+{% block content %}
 
-
-
-
-
-<h1>SpotiFEAT <span>by Sergio González</span></h1>
-
-<input id="burger" type="checkbox" />
-
-<label for="burger">
-    <span></span>
-    <span></span>
-    <span></span>
-</label>
-
-<nav>    
-  <ul>
-    <li><a href="http://localhost:5000/stats">My Stats <span class="emoji">📈</span></a></li>
-    <li><a href="#">My Top50 Songs<span class="emoji">🔝</span></a></li>
-    <li><a href="http://localhost:5000/trending">My Trending Songs<span class="emoji">🔥</span></a></li>
-    <li><a href="http://localhost:5000/matches">My Matches<span class="emoji">🎯</span></a></li>
-    <li><a href="http://localhost:5000/select_members">Party Mode <span class="emoji">🎉</span></a></li>
-  </ul>  
-</nav>
 
 
         <section style= "text-align: center; padding-top: 150px;padding-bottom: 50px;">
@@ -297,44 +298,57 @@
 
         </section>
 
+        <hr class="new">
+
         <section style= "text-align: center; padding-top: 50px;padding-bottom: 50px;">
 
             <p style = "font-size: 30px";>
 
-                Music Genre profile
+                Music Genre Taste 🎶
             </p>
 
 
 
 
-            <figure>
+            <div style= "text-align:center">
                 
                 <canvas id="myChart" width="300px" height="400px"></canvas>
-            </figure>
+            </div>
         
         </section>
 
 
+        <hr class="new">
+
+
         <section style= "text-align: center; padding-top: 50px;padding-bottom: 50px;padding-left: 30px;">
 
-            <p style = "font-size: 30px;text-align: left";>
+            <p style = "font-size: 30px";>
 
                 
-                Funny Stats
+                Funny Stats 🧐
             </p>
 
-            <table style='widows: 40%; border:"1";font-size: 40px; text-align: left;'>
+            <table class="center">
                 <tr>
-                    <td>Musical Age</td>
-                      <td>{{user_profile.avg_age}} years</td>
+                    <td></td>
+                      <td>{{user_profile.name}}</td>
+                      <td></td>
                 </tr>
                 <tr>
-                    <td>Popularity Taste</td>
-                      <td>{{user_profile.avg_popu}} (Rating)</td>
+                    <td>Musical Age</td>
+                      <td><span class="funstat">{{user_profile.avg_age}}</span> </td>
+                      <td>Years</td>
+                </tr>
+                <tr>
+                    <td>Popularity Taste Rating</td>
+                      <td><span class="funstat">{{user_profile.avg_popu}}</span></td>
+                      <td>Points</td>
                 </tr>
                 <tr>
                     <td>Avg. {{ref_artist}} Distance</td>
-                      <td>{{user_profile.avg_dis}} Degrees</td>
+                      <td><span class="funstat">{{user_profile.avg_dis}}</span></td>
+                      <td>Degrees</td>
                 </tr>
             
             
@@ -342,9 +356,13 @@
 
         </section>
 
+        <hr class="new">
+
 
         <section style= "text-align: center; padding-top: 50px;padding-bottom: 50px;padding-left: 30px;">
-
+            <p style = "font-size: 30px";>
+                Discover your Shortest Connection to {{ref_artist}} 👇
+            </p>
 
             {{user_profile.artist_img}}
 
@@ -417,7 +435,7 @@
         </section>
 
 
-    </main>
+
 
 
         <!-- ChartJS -->
@@ -475,11 +493,11 @@
     </script>
 
 
+{% endblock %}
 
 
 
 
-    </body>
 
 
 

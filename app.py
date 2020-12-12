@@ -154,50 +154,6 @@ def user_stats(user_id):
     return render_template('other_stats.html', main_user_profile = session['main_user'], user_profile = user_profile,ref_artist = ref_artist , chart_labels = genre_list, chart_values= values_list)
 
 
-
-
-
-
-@app.route('/compare')
-def compare():
-
-    user2_id =request.args.get('user2', -1)
-
-    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
-    
-    user2_profile = dataset.fetch_user2_profile(user2_id)
-
-    user2_name = user2_profile.get('name')
-    user2_id = user2_profile.get('user_id')
-    user2_img = user2_profile.get('img_url')
-    if user2_img == '':
-        user2_img = 'https://pbs.twimg.com/media/EFIv5HzUcAAdjhl?format=png&name=360x360'
-
-    user_name = session.get('main_user').get('name')
-    user_id = session.get('main_user').get('id')
-    user_img = session.get('main_user').get('img_url')
-
-    session['secon_user'] = {'id': user2_id, 'name': user2_name, 'img_url': user2_img }
-    
-    
-
-    return render_template('compare.html', user_id = user_id, user_name = user_name, user_img = user_img, user2_id = user2_id, user2_name=user2_name, user2_img=user2_img)
-
-
-@app.route('/playlist')
-def playlist():
-
-    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
-
-    main_user_id = session.get('main_user').get('id')
-    secon_user_id = session.get('secon_user').get('id')
-
-
-    txt_output = dataset.create_mix_playlist(main_user_id, secon_user_id, headers)
-
-    return render_template('playlist.html', txt_output = txt_output)
-
-
 @app.route('/select_members')
 def select_members():
 

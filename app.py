@@ -99,6 +99,11 @@ def intro():
     session['main_user'] = {'id': user_id, 'name': user_name, 'img_url': user_img, 'avg_dis': avg_distance, 'min_dis': min_distance, 'path_dis': path_distance, 'avg_popu': avg_popularity, 'avg_age': avg_age, 'values_chart': values_list }
     
     session['chart_labels'] = genre_list
+
+
+    session['matches_info'] = dataset.get_my_matches(session['main_user'].get('id'))
+
+    
   
 
 
@@ -146,6 +151,13 @@ def user_stats(user_id):
     user_profile['avg_age']= avg_age
     user_profile['values_chart']= values_list
 
+    other_users_info = session['matches_info']
+
+    match_score = dataset.fecth_match_score(user_id, other_users_info)
+
+
+    user_profile['score']= match_score
+
 
 
 
@@ -191,9 +203,7 @@ def party():
 def show_matches():
 
 
-    other_users_info = dataset.get_my_matches(session['main_user'].get('id'))
-
-    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+    other_users_info = session['matches_info']
     
 
     return render_template('matches.html', other_users_info = enumerate(other_users_info))

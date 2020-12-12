@@ -1125,6 +1125,15 @@ def get_score_by_distance(main_user, other_users):
 
 
 
+def fecth_match_score(user_id, other_users_info):
+
+    for user in other_users_info:
+
+        if user.get('user_id') == user_id:
+            return user.get('score')
+
+
+
 
 
     

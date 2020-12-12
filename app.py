@@ -213,9 +213,21 @@ def show_matches():
     return render_template('matches.html', other_users_info = enumerate(other_users_info))
 
 
+@app.route('/trending')
+def trending_songs():
+
+    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+    
+    info_trending = dataset.get_my_trending(headers)
+
+    return render_template('trending.html', info_trending = enumerate(info_trending))
+
+
 
 @app.route('/get_genre_profile/<user_id>')
 def get_profile_api(user_id):
+
+    
 
     return jsonify(dataset.genre_profile_api(user_id))
 

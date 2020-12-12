@@ -120,43 +120,36 @@
             }
 
 
-            section[class*='cols'] {
-            display: flex;
+
+            
+            
+            .grid-container {
+            display: grid;
+            grid-column-gap: 100px;
+            grid-template-columns: auto auto auto auto auto;
+            grid-template-rows: auto auto auto auto auto auto;
+            background-color:black;
+            grid-gap: 50px;
+            padding: 10px;
+            row-gap: 100px;
             }
 
-            .cols-3 > * {
-                
-                width: 33.33%;
-                margin: 30px;
-                padding-top: 150px;
+            .grid-item {
+            background-color: rgba(255, 255, 255, 0.116);
+            border: 1px solid rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            font-size: 15px;
+            text-align: center;
+            position: relative;}
+
+
+            .centered {
+            position: absolute;
+            top: 120%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             }
-
-            figure p {
             
-            margin-bottom: 7px;
-            font-size: 20px;
-            text-align: left;
-        }
-
-            h3 {
-            font-size: 20;
-            margin-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,.2);
-            padding-bottom: 10px;
-            font-weight: 200;
-            
-            text-align: left;
-        }
-
-            h2 {
-                font-size: 40px;
-                margin-bottom: 10px;
-                padding-bottom: 10px;
-                font-weight: 200;
-                
-                text-align: left;
-        }
-
 
 
 
@@ -189,7 +182,7 @@
   <ul>
     <li><a href="http://localhost:5000/stats">My Stats <span class="emoji">📈</span></a></li>
     <li><a href="#">My Top50 Songs<span class="emoji">🔝</span></a></li>
-    <li><a href="http://localhost:5000/trending">My Trending Songs<span class="emoji">🔥</span></a></li>
+    <li><a href="#">My Trending Songs<span class="emoji">🔥</span></a></li>
     <li><a href="http://localhost:5000/matches">My Matches<span class="emoji">🎯</span></a></li>
     <li><a href="http://localhost:5000/select_members">Party Mode <span class="emoji">🎉</span></a></li>
   </ul>  
@@ -207,64 +200,34 @@
     font-weight: bold;">
 
 
-    <section class="cols-3">
+<section style= "padding-top: 150px;">
 
-        {% for num,item in other_users_info %}
-        {% if num % 3 != 0 %}
+    <div class="grid-container">
 
-        <figure>
+        {% for num,item in info_trending %}
 
-            
-            <h3>{{item.name}}</h3>
-            
-
-            <img src= '{{item.img_url}}' width=400px>
-            <h2>{{item.score}} %</h2>
-        
-        </figure>
+        <div class="grid-item">
 
 
-        {% else %}
+            <img src= '{{item.album_img}}' width=200px>
+            <div class="centered">{{item.song_name}} - {{item.artist_name}}</div>
 
 
-        </section>
-
-
-        <section class="cols-3">
-
-        <figure>
-
-
-            <h3>{{item.name}}</h3>
-
-            <img src= '{{item.img_url}}' width=400px>
 
             
-            
-            
 
-            
-            <h2>{{item.score}}</h2>
-        
-        </figure>
-
-        {% endif %}
+        </div>
 
         {% endfor %}
 
 
 
+    </div>
+
+
+
         
     </section>
-
-        <section style= "text-align: center; padding-top: 300px;padding-bottom: 50px;padding-left: 30px;">
-            
-            {{other_users_info}}
-
-
-        </section>
-
-
 
 
       

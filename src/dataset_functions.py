@@ -1255,30 +1255,36 @@ def collect_info_new_playlist(headers, song_id_list):
     info_playlist = []
 
     for song in song_id_list:
-        print(song)
 
-        match = list(mysql.fetch_report_song(song))[0]
-
-
-        song_name = match[0]
-        artist_name = match[1]
-        album_name = match[2]
-        artist_img = match[3]
-        album_img = match[4]
-
-        if artist_img == '':
-            artist_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
-
-        if album_img == '':
-            album_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
-
-
-        info_song = {'song_name': song_name, 'artist_name': artist_name, 'album_name': album_name, 'artist_img': artist_img, 'album_img': album_img}
+        info_song = get_info_song_dict_by_id(song)
 
         info_playlist.append(info_song)
 
 
     return info_playlist
+
+def get_info_song_dict_by_id(song):
+
+    match = list(mysql.fetch_report_song(song))[0]
+
+
+    song_name = match[0]
+    artist_name = match[1]
+    album_name = match[2]
+    artist_img = match[3]
+    album_img = match[4]
+
+    if artist_img == '':
+        artist_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
+
+    if album_img == '':
+        album_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
+
+
+    info_song = {'song_name': song_name, 'artist_name': artist_name, 'album_name': album_name, 'artist_img': artist_img, 'album_img': album_img}
+
+    return info_song
+
 
 
 def genre_profile_api(user_id):
@@ -1295,6 +1301,23 @@ def genre_profile_api(user_id):
 
 
     return genre_list, values_list
+
+
+def get_my_trending(headers):
+
+    trending_songs = spotify.get_top_50('short_term', headers)
+
+    info_trending = []
+    for song in trending_songs:
+        info_song = get_info_song_dict_by_id(song)
+        info_trending.append(info_song)
+
+    return info_trending
+
+
+
+
+
 
 
     

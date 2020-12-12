@@ -240,6 +240,17 @@
             }
 
 
+            hr.new {
+            border: 1px solid rgb(104, 105, 104);
+            border-radius: 1px;
+            margin: 0px 50px;
+            }
+
+            canvas{
+            margin: 0 auto;
+            }
+
+
        
 
 
@@ -297,22 +308,26 @@
 
         </section>
 
+        <hr class="new">
+
         <section style= "text-align: center; padding-top: 50px;padding-bottom: 50px;">
 
             <p style = "font-size: 30px";>
 
-                Music Genre profile
+                Music Genre Taste 🎯
             </p>
 
 
 
 
-            <figure>
+            <div style= "text-align:center">
                 
                 <canvas id="myChart" width="300px" height="400px"></canvas>
-            </figure>
+            </div>
         
         </section>
+
+        <hr class="new">
 
 
         <section style= "text-align: center; padding-top: 50px;padding-bottom: 50px;padding-left: 30px;">
@@ -435,6 +450,10 @@
 
         var labels_val = {{chart_labels|safe }};
         var values_val = {{user_profile.values_chart|safe }};
+        var name_user = {{user_profile.name|tojson}};
+        var name_main = {{main_user_profile.name|tojson }};
+
+        var other_values_val = {{main_user_profile.values_chart|safe }};
 
         const styles = {
     color: {
@@ -451,17 +470,30 @@
             data:{
                 labels:labels_val,
                 datasets:[{
-                        label:'No. Songs',
+                        label:name_user,
                         data:values_val,
                         borderColor: styles.color.solids[1],
                         backgroundColor: styles.color.alphas[1],
                         borderWidth: 1
-                }]
+                },
+
+                {
+                        label:name_main,
+                        data:other_values_val,
+                        borderColor: styles.color.solids[0],
+                        backgroundColor: styles.color.alphas[0],
+                        borderWidth: 1
+                }
+            
+            
+            
+            
+            ]
             },
             options:{
                 responsive: false,
                 legend:{
-                    display: false
+                    position: 'bottom'
                     }
                 }
             

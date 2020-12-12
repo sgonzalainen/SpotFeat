@@ -1235,19 +1235,27 @@ def get_other_users_info(main_user_id):
     others_info = []
 
     for other in other_users:
-
-        profile = fetch_user2_profile(other)
-        name = profile.get('name')
-        img = profile.get('img_url')
-
-        if img == '':
-            img = 'https://pbs.twimg.com/media/EFIv5HzUcAAdjhl?format=png&name=360x360'
-
-
-        tmp_dict = {'name': name, 'user_id': other, 'img_url': img}
-        others_info.append(tmp_dict)
+        others_info.append(get_full_info_user(other))
 
     return others_info
+
+
+def get_full_info_user(user_id):
+
+    profile = fetch_user2_profile(user_id)
+    name = profile.get('name')
+    img = profile.get('img_url')
+
+    if img == '':
+        img = 'https://pbs.twimg.com/media/EFIv5HzUcAAdjhl?format=png&name=360x360'
+
+
+    tmp_dict = {'name': name, 'user_id': user_id, 'img_url': img}
+
+    return tmp_dict
+
+
+
 
 
 def collect_info_new_playlist(headers, song_id_list):

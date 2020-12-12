@@ -74,8 +74,6 @@ def intro():
     if user_img == '':
         user_img = 'https://pbs.twimg.com/media/EFIv5HzUcAAdjhl?format=png&name=360x360'
 
-    #here comes new function to get popoularity rating of user
-    pop_rating = dataset.get_rating_popu_user(user_id)
 
 
     other_users = dataset.get_all_users(user_id)
@@ -92,8 +90,18 @@ def intro():
     #### Musical Age ############################
     avg_age = dataset.get_years_user(user_id)
 
-    session['main_user'] = {'id': user_id, 'name': user_name, 'img_url': user_img, 'avg_dis': avg_distance, 'min_dis': min_distance, 'path_dis': path_distance, 'avg_popu': avg_popularity, 'avg_age': avg_age  }
+    
     session['ref_artist'] = ref_artist
+
+
+    genre_list, values_list = dataset.genre_profile_api(user_id)
+
+    session['main_user'] = {'id': user_id, 'name': user_name, 'img_url': user_img, 'avg_dis': avg_distance, 'min_dis': min_distance, 'path_dis': path_distance, 'avg_popu': avg_popularity, 'avg_age': avg_age, 'values_chart': values_list }
+    
+    session['chart_labels'] = genre_list
+  
+
+
 
 
     
@@ -105,23 +113,45 @@ def intro():
 @app.route('/stats')
 def stats():
 
+
+
     user_id = session['main_user'].get('id')
 
-    fig, similarity = dataset.get_chart_genres(user_id)
-    tmpfile = BytesIO()
-    fig.savefig(tmpfile, format='png')
-    encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
+    genre_list, values_list = dataset.genre_profile_api(user_id)
+
+
+
+
+    return render_template('stats.html', user_profile = session['main_user'],ref_artist = session['ref_artist'] ,chart_labels = genre_list, chart_values= values_list)
+
+@app.route('/users/<user_id>')
+def user_stats(user_id):
+
+
+
+    user_profile = dataset.get_full_info_user(user_id)
+
+    avg_popularity = dataset.get_rating_popu_user(user_id)
+    avg_distance, min_distance, path_distance, ref_artist = dataset.get_info_distances_artist_ref(user_id)
+    avg_age = dataset.get_years_user(user_id)
 
 
     genre_list, values_list = dataset.genre_profile_api(user_id)
 
-    print(genre_list, values_list)
+
+    user_profile['avg_dis']= avg_distance
+    user_profile['min_dis']= min_distance
+    user_profile['path_dis']= path_distance
+    user_profile['avg_popu']= avg_popularity
+    user_profile['avg_age']= avg_age
+    user_profile['values_chart']= values_list
 
 
 
-    return render_template('stats.html', user_profile = session['main_user'],ref_artist = session['ref_artist'] ,chart_labels = genre_list, chart_values= values_list,fig = encoded)
 
 
+
+    return render_template('other_stats.html', main_user_profile = session['main_user'], user_profile = user_profile,ref_artist = ref_artist , chart_labels = genre_list, chart_values= values_list)
 
 
 
@@ -221,6 +251,10 @@ def trending_songs():
     info_trending = dataset.get_my_trending(headers)
 
     return render_template('trending.html', info_trending = enumerate(info_trending))
+
+
+
+    
 
 
 

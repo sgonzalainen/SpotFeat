@@ -158,6 +158,34 @@
         }
 
 
+        .grid-container {
+            display: grid;
+            grid-column-gap: 100px;
+            grid-template-columns: auto auto auto auto;
+            grid-template-rows: auto auto auto auto auto auto;
+            background-color:black;
+            grid-gap: 50px;
+            padding: 10px;
+            row-gap: 100px;
+            }
+
+            .grid-item {
+            background-color: rgba(255, 255, 255, 0.116);
+            border: 1px solid rgba(0, 0, 0, 0.8);
+            padding: 10px 30px 10px 20px;
+            font-size: 15px;
+            text-align: left;
+            position: relative;}
+
+
+            .centered {
+            position: absolute;
+            top: 00%;
+            left: 50%;
+            
+            }
+
+
 
 
 
@@ -207,68 +235,64 @@
     font-weight: bold;">
 
 
-    <section class="cols-3">
+<section style= "padding-top: 150px;">
+
+
+
+
+        <div class="grid-container">
+
+
+
 
         {% for num,item in other_users_info %}
-        {% if num % 3 != 0 %}
-
-        <figure>
-
-            
-            <h3>{{item.name}}</h3>
-            
-
-            <img src= '{{item.img_url}}' width=400px>
-            <h2>{{item.score}} %</h2>
-        
-        </figure>
 
 
-        {% else %}
+        <div class="grid-item">
 
 
-        </section>
+
+            <a href="http://localhost:5000/users/{{item.user_id}}">
+            <img src= '{{item.img_url}}' width=100px>
+            </a>
 
 
-        <section class="cols-3">
+            <div class="centered">
 
-        <figure>
+                <p>
+                    {{item.name}}
+                </p>
+
+                <p style= "font-size: 35px;" >
+                    {{item.score}} %
+                </p>
 
 
-            <h3>{{item.name}}</h3>
-
-            <img src= '{{item.img_url}}' width=400px>
-
-            
-            
+                
+                
             
 
-            
-            <h2>{{item.score}}</h2>
-        
-        </figure>
+                
 
-        {% endif %}
+                
+
+
+
+
+
+            </div>
+
+        </div>
+
+
 
         {% endfor %}
 
-
-
-        
-    </section>
-
-        <section style= "text-align: center; padding-top: 300px;padding-bottom: 50px;padding-left: 30px;">
-            
-            {{other_users_info}}
-
-
-        </section>
+    </div>
 
 
 
-
-      
-
+</section> 
 
 
     </body>

@@ -1415,6 +1415,7 @@ def get_info_song_dict_by_id(song):
     album_name = match[2]
     artist_img = match[3]
     album_img = match[4]
+    preview_url = match[5]
 
     if artist_img == '':
         artist_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
@@ -1423,7 +1424,7 @@ def get_info_song_dict_by_id(song):
         album_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
 
 
-    info_song = {'song_name': song_name, 'artist_name': artist_name, 'album_name': album_name, 'artist_img': artist_img, 'album_img': album_img}
+    info_song = {'song_name': song_name, 'artist_name': artist_name, 'album_name': album_name, 'artist_img': artist_img, 'album_img': album_img, 'preview_url':preview_url }
 
     return info_song
 
@@ -1457,6 +1458,19 @@ def get_my_trending(headers):
     return info_trending
 
 
+def get_my_top(headers):
+
+    top_songs = spotify.get_top_50('long_term', headers)
+
+    info_top = []
+    for song in top_songs:
+        info_song = get_info_song_dict_by_id(song)
+        info_top.append(info_song)
+
+    return info_top
+
+
+
 def update_albums_table_missing(headers):
 
     albums_to_scrape = [album[0] for album in list(mysql.fetch_album_in_songs_null())]
@@ -1480,6 +1494,55 @@ def update_albums_table_missing(headers):
 
         for artist in data['artists']:
             mysql.insert_mysql('artist_album',{'artist_id' : artist['id'], 'album_id': album})
+
+
+def create_video(mytop_list):
+
+
+    videoclips = []
+
+    for item in mytop_list:
+
+        audioclip = create_audio(item)
+        videoclip = create_video_clip(item, audioclip)
+        videoclips.append(videoclip)
+
+
+    merged_videoclip = audio.merge_video_clips(videoclips)
+
+
+    return merged_videoclip
+
+    
+
+
+
+
+
+
+
+def create_audio(item):
+
+    mp3_link =  item.get('preview_url')
+
+    audio._create_mp3_file(mp3_link, path_temp_mp3) #this creates mp3 file
+    
+    audioclip = audio.create_clip(path_temp_mp3)
+    
+    os.remove(path_temp_mp3) #deleting used mp3 file
+
+    return audioclip
+
+
+def create_video_clip(item, audioclip):
+
+    img_url = item.get('artist_img')
+
+    videoclip = audio.create_video_clip(img_url, audioclip)
+
+    return videoclip
+
+
 
 
 

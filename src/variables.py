@@ -15,6 +15,9 @@ class AudioVar():
     model_path = './model/mymodel'
 
 
+    seconds_clip = 5
+
+
 
 
 

@@ -10,7 +10,7 @@ from io import BytesIO
 
 
 
-app =Flask(__name__)
+app =Flask(__name__, static_url_path="", static_folder="static")
 
 
 #sess = Session()
@@ -233,6 +233,31 @@ def trending_songs():
     return render_template('trending.html', info_trending = enumerate(info_trending))
 
 
+@app.route('/mytop')
+def mytop():
+
+    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+    
+    mytop_list = dataset.get_my_top(headers)
+
+    myvideo = dataset.create_video(mytop_list)
+
+    myvideo.write_videofile("static/movie.mp4", fps=24)
+
+
+    user_name = session.get('main_user').get('name')
+
+  
+
+
+
+
+    return render_template('top.html', user_name = user_name)
+
+
+
+
+
 
     
 
@@ -240,6 +265,8 @@ def trending_songs():
 
 @app.route('/get_genre_profile/<user_id>')
 def get_profile_api(user_id):
+
+
 
     
 

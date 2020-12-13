@@ -133,5 +133,6 @@ data/
 output/
 superseded/
 notebooks/
+static/
 
 prueba.ipynb

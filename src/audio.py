@@ -3,6 +3,7 @@ import requests
 import librosa
 import audioread
 import numpy as np
+import moviepy.editor as mpy
 
 sample_rate = AudioVar.sample_rate
 n_mfcc = AudioVar.n_mfcc
@@ -85,6 +86,50 @@ def split_mfcc(mfcc):
         mfcc_splited.append(sample)
     
     return mfcc_splited
+
+
+def create_clip(path_temp_mp3):
+
+    audioclip = mpy.AudioFileClip(path_temp_mp3)
+    audioclip = audioclip.subclip(t_start = 0, t_end = AudioVar.seconds_clip)
+
+    return audioclip
+
+
+def create_video_clip(img_url, audioclip):
+
+
+    clip = mpy.ImageSequenceClip([img_url], durations =[AudioVar.seconds_clip])
+
+    videoclip = clip.set_audio(audioclip)
+
+    return videoclip
+
+def merge_video_clips(videoclips):
+
+
+    merged_videoclip = mpy.concatenate_videoclips(videoclips, method='compose')
+
+    return merged_videoclip
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
 
 

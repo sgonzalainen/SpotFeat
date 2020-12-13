@@ -16,25 +16,30 @@
             .scrollit {
                 overflow:scroll;
                 height:800px;
-                /*width:60%; */
-            }
-
-            .column {
-            float: left;
-            padding: 10px;
+                width:1600px;
+                margin-left: auto;
+                margin-right: auto;
 
             }
 
-            .left {
-            width: 30%;
+            .centered{
+                width:600px;
+                margin-left: auto;
+                margin-right: auto;
+                padding-bottom: 50px;
+                display: block;
+                float:none;
+
             }
 
-            .right {
-            width: 100%;
+
+
+            hr.new {
+            border: 1px solid #1DB954;
+            border-radius: 1px;
+            margin: 0px 70px;
             }
 
-
-    
 
 
         </style>
@@ -47,36 +52,38 @@
 
 
 
-    <h4 style="color:#FFFFFF";>
+    <h4 style="font-size: 45px;">
             
         Congratulations... here you have your awesome playlist!
 
     </h4>
 
-    <div class="column left" >
+    <div class="centered" >
 
-        <iframe src="https://giphy.com/embed/sp685iuIEGuys" width="480" height="201" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
-        <body style="background-color:#000000; color: white; font-family: Gotham; font-weight: bold"; >
+
+        <table>
+            <tr>
+                <td><img src="https://png2.cleanpng.com/sh/f7ff3754fac3c50ffa164c789bc0cd72/L0KzQYm3VMI5N5Dsj5H0aYP2gLBuTfNwdaF6jNd7LXnmf7B6TgNpaaNqRdtsb36wcsb7lP9vNaRteeRybnewRbLsVMRjQGU7TKdvMEexRoa6UMk0OWY2TaQ9OUGzSYm3VMEyOV91htk=/kisspng-computer-icons-share-icon-button-sharing-5ae44b84645f07.6530931515249109804111.png" width="50" /></td>
+                <td>{{url_playlist}} </td>  
+            </tr>
+
+        </table>
+
+        <iframe src="../img/playlist.gif" width="480" ></iframe>
+ 
     
-            <table>
-                <tr>
-                    <td><img src="https://png2.cleanpng.com/sh/f7ff3754fac3c50ffa164c789bc0cd72/L0KzQYm3VMI5N5Dsj5H0aYP2gLBuTfNwdaF6jNd7LXnmf7B6TgNpaaNqRdtsb36wcsb7lP9vNaRteeRybnewRbLsVMRjQGU7TKdvMEexRoa6UMk0OWY2TaQ9OUGzSYm3VMEyOV91htk=/kisspng-computer-icons-share-icon-button-sharing-5ae44b84645f07.6530931515249109804111.png" width="80" /></td>
-                    <td>{{url_playlist}} </td>  
-                </tr>
 
-            </table>
 
     </div>
 
 
-    <div class="column right" >
+    <hr class="new">
 
-
-
+</section>
     
 
-
-
+    <section>
+       
         <tbody>
             <tr>
               <td colspan="2">
@@ -111,10 +118,98 @@
             </tr>
         </tbody>
 
+</section>
 
+<section>
+
+
+    <div style= "text-align:center">
+                
+        <canvas id="myChart" width="400px" height="400px"></canvas>
     </div>
 
+
+
 </section>
+
+
+
+
+
+
+
+
+
+
+       <!-- ChartJS -->
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+
+
+
+       <script>
+   
+       Chart.defaults.global.defaultFontColor = '#fff';
+       Chart.defaults.global.elements.line.borderWidth = 1;
+       Chart.defaults.global.elements.rectangle.borderWidth = 1;
+       Chart.defaults.scale.gridLines.color = '#444';
+       Chart.defaults.scale.ticks.display = false;
+   
+           var labels_val = {{chart_dict_playlist.labels|tojson }};
+           var values_val = {{chart_dict_playlist.values_chart|safe }};
+
+   
+           const styles = {
+       color: {
+           solids: ['rgba(116, 72, 194, 1)', 'rgba(33, 192, 215, 1)', 'rgba(217, 158, 43, 1)', 'rgba(205, 58, 129, 1)', 'rgba(156, 153, 204, 1)', 'rgba(225, 78, 202, 1)'],
+           alphas: ['rgba(116, 72, 194, .2)', 'rgba(33, 192, 215, .2)', 'rgba(217, 158, 43, .2)', 'rgba(205, 58, 129, .2)', 'rgba(156, 153, 204, .2)', 'rgba(225, 78, 202, .2)']
+       }
+   };
+   
+   
+   
+           var ctx= document.getElementById("myChart").getContext("2d");
+           var myChart= new Chart(ctx,{
+               type:"doughnut",
+               data:{
+                   labels:labels_val,
+                   datasets:[{
+                        label: '%',
+                           data:values_val,
+                           borderColor: styles.color.solids,
+                           backgroundColor: styles.color.alphas,
+                           borderWidth: 1
+                   }]
+               },
+               options:{
+                   responsive: false,
+                   legend:{
+                    position: 'right'
+                       },
+                       title: {
+                        display: true,
+                        position: 'top',
+                        padding: 0,
+                        text: 'Share %',
+                        fontSize: 20
+                    }
+                   },
+               
+           });
+   
+   
+   
+   
+   
+   
+       </script>
+
+
+
+
+
+
+
+
     {% endblock %}
 
 

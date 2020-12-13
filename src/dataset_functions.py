@@ -540,7 +540,38 @@ def find_songs_playlist(num_songs, users):
 def get_list_selected_songs(num_songs, users):
     df, df_selected = find_songs_playlist(num_songs, users)
 
-    return list(df_selected.song_id)
+    selected_songs = list(df_selected.song_id)
+
+
+    chart_dict_playlist = get_stat_playlist_by_user(df, selected_songs)
+
+
+
+
+    return selected_songs, chart_dict_playlist
+
+
+def get_stat_playlist_by_user(df,selected_songs):
+
+    df = df[df.song_id.isin(selected_songs)]
+
+
+    df_user = df.groupby('user_id').sum()
+
+    members_list = df_user.index.values.tolist()
+
+    members_list =  list(map(translate_user_id, members_list)) #this transalte to name user
+
+    values_list = df_user.total_points.values.tolist()
+
+
+    pct_list =[ round(value / np.sum(values_list) *100, 1) for value in values_list]
+
+    return {'labels': members_list, 'values_chart':pct_list }
+
+
+
+
 
 
 
@@ -639,6 +670,15 @@ def find_pool_songs(users):
         all_songs.extend([item[0] for item in fetch])
 
     return list(set(all_songs))
+
+
+def translate_user_id(user_id):
+
+  
+
+    name = list(mysql.fetch_column_table_where('users', 'name', 'user_id', user_id))[0][0]
+
+    return name
 
 
 
@@ -831,7 +871,7 @@ def update_predictions_database(self):
 
 
 def create_mix_playlist(headers, num_songs, users):
-    song_id_list = get_list_selected_songs(num_songs, users)
+    song_id_list, chart_dict_playlist = get_list_selected_songs(num_songs, users)
 
     data = spotify.create_playlist(headers, users)
     playlist_id = data['id']
@@ -839,7 +879,7 @@ def create_mix_playlist(headers, num_songs, users):
 
     url_playlist = data['external_urls'].get('spotify')
 
-    return song_id_list, url_playlist
+    return song_id_list, url_playlist, chart_dict_playlist
 
 
 

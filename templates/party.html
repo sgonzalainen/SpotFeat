@@ -40,6 +40,52 @@
             margin: 0px 70px;
             }
 
+            .gif {
+            background-image:url("https://github.com/sgonzalainen/SpotFeat/blob/main/img/playlist.gif?raw=true");
+            width:480px;
+            height:201px;
+            margin-left: auto;
+            margin-right: auto;
+            
+          }
+
+
+
+          section[class*='cols'] {
+            display: flex;
+            
+        }
+
+        .cols-3 > * {
+            width: 33.33%;
+            margin: 10px
+        }
+
+        canvas {
+    width: 100%;
+}
+
+
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent; /* make scrollbar transparent */
+}
+
+table.center {
+            margin-left:auto; 
+            margin-right:auto;
+            text-align: left;
+        }
+
+
+        span.funstat {
+            font-size: 30px;
+            color: #1DB954;
+            
+            }
+
+
+
 
 
         </style>
@@ -48,7 +94,7 @@
 {% extends "parent.html" %}
 {% block content %}
     
-<section style= "text-align: center; padding-top: 150px;padding-bottom: 50px;">
+<section style= "text-align: center; padding-top: 150px;padding-bottom: 70px;">
 
 
 
@@ -69,10 +115,9 @@
 
         </table>
 
-        <iframe src="../img/playlist.gif" width="480" ></iframe>
- 
-    
 
+        <div class= "gif"></div>
+ 
 
     </div>
 
@@ -82,7 +127,7 @@
 </section>
     
 
-    <section>
+    <section style= "text-align: center; padding-top: 50px;padding-bottom: 50px;">
        
         <tbody>
             <tr>
@@ -120,13 +165,59 @@
 
 </section>
 
-<section>
+<hr class="new">
+
+<section style= "text-align: center; padding-top: 50px;padding-bottom: 50px; padding-left: 50px; padding-right: 50px">
+
+    <p style = "font-size: 30px";>
+
+        Playlist Stats 🧐
+    </p>
 
 
-    <div style= "text-align:center">
-                
-        <canvas id="myChart" width="400px" height="400px"></canvas>
-    </div>
+
+
+    <section class="cols-3">
+        <figure>
+            <h3>% Contribution to Playlist </h3>
+            <div style= "text-align:center">
+            <canvas id="myChart" width="400px" height="400px"></canvas>
+            </div>
+            
+        </figure>
+
+        <figure>
+            <h3>Genres</h3>
+            <div style= "text-align:center">
+            <canvas id="myChart_bar" width="400px" height="400px"></canvas>
+            </div>
+            
+        </figure>
+
+        <figure>
+            <h3>Funny Stats</h3>
+            <table class="center">
+
+                <tr>
+                    <td>Musical Age</td>
+                      <td><span class="funstat">{{stats_playlist.age}}</span> </td>
+                      <td>Years</td>
+                </tr>
+                <tr>
+                    <td>Popularity Taste Rating</td>
+                      <td><span class="funstat">{{stats_playlist.popularity}}</span></td>
+                      <td>Points</td>
+                </tr>
+
+            
+            
+            </table>
+        </figure>
+    </section>
+
+
+
+
 
 
 
@@ -152,10 +243,14 @@
        Chart.defaults.global.elements.line.borderWidth = 1;
        Chart.defaults.global.elements.rectangle.borderWidth = 1;
        Chart.defaults.scale.gridLines.color = '#444';
-       Chart.defaults.scale.ticks.display = false;
+       Chart.defaults.scale.ticks.display = true;
    
-           var labels_val = {{chart_dict_playlist.labels|tojson }};
-           var values_val = {{chart_dict_playlist.values_chart|safe }};
+           var labels_val_con = {{stats_playlist.contribution.labels|tojson }};
+           var values_val_con = {{stats_playlist.contribution.values_chart|safe }};
+
+
+           var labels_val_gen = {{stats_playlist.genres.labels|tojson }};
+           var values_val_gen = {{stats_playlist.genres.values_chart|safe }};
 
    
            const styles = {
@@ -171,10 +266,10 @@
            var myChart= new Chart(ctx,{
                type:"doughnut",
                data:{
-                   labels:labels_val,
+                   labels:labels_val_con,
                    datasets:[{
                         label: '%',
-                           data:values_val,
+                           data:values_val_con,
                            borderColor: styles.color.solids,
                            backgroundColor: styles.color.alphas,
                            borderWidth: 1
@@ -186,10 +281,61 @@
                     position: 'right'
                        },
                        title: {
-                        display: true,
+                        display: false,
                         position: 'top',
                         padding: 0,
                         text: 'Share %',
+                        fontSize: 20
+                    }
+                   },
+               
+           });
+
+
+
+
+
+
+           var ctx_bar= document.getElementById("myChart_bar").getContext("2d");
+           var myChart= new Chart(ctx_bar,{
+               type:"bar",
+               data:{
+                   labels:labels_val_gen,
+                   datasets:[{
+                        label: 'No. Songs',
+                           data:values_val_gen,
+                           borderColor: styles.color.solids,
+                           backgroundColor: styles.color.alphas,
+                           borderWidth: 1
+                   }]
+               },
+               options:{
+                
+                   responsive: false,
+                   legend: {
+            display: false
+        },
+        scales: {
+            xAxes : [ {
+            gridLines : {
+                display : false
+            }
+        } ],
+            yAxes: [{
+                gridLines: {
+                    display: false
+                },
+                ticks: {
+                    beginAtZero: true,
+                    display: false
+                }
+            }]
+        },
+                       title: {
+                        display: false,
+                        position: 'top',
+                        padding: 0,
+                        text: 'Genres',
                         fontSize: 20
                     }
                    },

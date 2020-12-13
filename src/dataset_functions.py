@@ -16,6 +16,8 @@ import pandas as pd
 import re
 from sklearn.metrics.pairwise import cosine_similarity
 
+import collections
+
 
 path_temp_mp3 = AudioVar.path_temp_mp3
 
@@ -543,15 +545,89 @@ def get_list_selected_songs(num_songs, users):
     selected_songs = list(df_selected.song_id)
 
 
-    chart_dict_playlist = get_stat_playlist_by_user(df, selected_songs)
+    stats_playlist = get_stats_playlist(df, selected_songs)
 
 
 
 
-    return selected_songs, chart_dict_playlist
+    return selected_songs, stats_playlist
 
 
-def get_stat_playlist_by_user(df,selected_songs):
+def get_stats_playlist(df,selected_songs):
+
+    
+
+    contribution_playlist = get_contribution_playlist(df,selected_songs)
+
+
+    genre_stats_playlist = get_genre_stat_playlist(selected_songs)
+
+    popularity = get_popu_playlist(selected_songs)
+
+    age = get_age_playlist(selected_songs)
+
+
+    stats_playlist = {'contribution': contribution_playlist, 'genres': genre_stats_playlist, 'popularity': popularity, 'age': age}
+
+
+
+
+
+    return stats_playlist
+
+
+def get_popu_playlist(selected_songs):
+
+    popu_list = []
+
+    for song in selected_songs:
+        popu_rating = list(mysql.fetch_column_table_where('songs', 'popularity', 'song_id', song))[0][0]
+        popu_list.append(popu_rating)
+
+
+
+    avg_pop = int(np.mean(popu_list))
+
+    return avg_pop
+
+
+def get_age_playlist(selected_songs):
+
+    dates_list = []
+
+    for song in selected_songs:
+        date = list(mysql.fetch_years_songs_by_song_id(song))[0][0]
+        dates_list.append(date)
+
+
+    ages_list = list(map(extract_age_date, dates_list))
+
+    avg_age = round(np.mean(ages_list),1)
+
+    return avg_age
+
+
+def get_genre_stat_playlist(selected_songs):
+
+    genre_list = []
+
+    for song in selected_songs:
+        genre = list(mysql.fetch_column_table_where('songs', 'COALESCE(genre, genre_model)', 'song_id', song))[0][0]
+        genre_list.append(genre)
+
+    counter_genres = collections.Counter(genre_list)
+
+    labels = list(counter_genres.keys())
+    values_chart = list(counter_genres.values())
+
+    return {'labels':labels, 'values_chart':values_chart }
+
+
+
+
+
+
+def get_contribution_playlist(df,selected_songs):
 
     df = df[df.song_id.isin(selected_songs)]
 
@@ -568,6 +644,8 @@ def get_stat_playlist_by_user(df,selected_songs):
     pct_list =[ round(value / np.sum(values_list) *100, 1) for value in values_list]
 
     return {'labels': members_list, 'values_chart':pct_list }
+
+
 
 
 
@@ -871,7 +949,7 @@ def update_predictions_database(self):
 
 
 def create_mix_playlist(headers, num_songs, users):
-    song_id_list, chart_dict_playlist = get_list_selected_songs(num_songs, users)
+    song_id_list, stats_playlist = get_list_selected_songs(num_songs, users)
 
     data = spotify.create_playlist(headers, users)
     playlist_id = data['id']
@@ -879,7 +957,7 @@ def create_mix_playlist(headers, num_songs, users):
 
     url_playlist = data['external_urls'].get('spotify')
 
-    return song_id_list, url_playlist, chart_dict_playlist
+    return song_id_list, url_playlist, stats_playlist
 
 
 

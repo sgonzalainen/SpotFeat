@@ -192,6 +192,12 @@ class MysqlConn():
 
         return self.conn.execute(query)
 
+    def fetch_years_songs_by_song_id(self, song_id):
+
+        query = f"SELECT b.release_date FROM songs a INNER JOIN albums b ON a.album_id = b.album_id WHERE a.song_id = '{song_id}';"
+
+        return self.conn.execute(query)
+
 
     def fetch_column_table_where(self, table_name, column_name, where_column, value):
         query = f"SELECT {column_name} FROM {table_name} WHERE {where_column} = '{value}';"

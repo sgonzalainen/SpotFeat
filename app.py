@@ -96,7 +96,7 @@ def intro():
 
     genre_list, values_list = dataset.genre_profile_api(user_id)
 
-    print(type(values_list))
+    
 
     session['main_user'] = {'id': user_id, 'name': user_name, 'img_url': user_img, 'avg_dis': avg_distance, 'min_dis': min_distance, 'path_dis': path_distance, 'avg_popu': avg_popularity, 'avg_age': avg_age, 'values_chart': values_list }
     
@@ -200,13 +200,13 @@ def party():
     headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
     num_songs = 50 # to be changeedeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 
-    song_id_list, url_playlist, chart_dict_playlist = dataset.create_mix_playlist(headers, num_songs, members)
+    song_id_list, url_playlist, stats_playlist = dataset.create_mix_playlist(headers, num_songs, members)
 
     info_playlist = dataset.collect_info_new_playlist(headers, song_id_list)
 
-    print(chart_dict_playlist)
 
-    return render_template('party.html', url_playlist = url_playlist, info_playlist = info_playlist, chart_dict_playlist= chart_dict_playlist)
+
+    return render_template('party.html', url_playlist = url_playlist, info_playlist = info_playlist, stats_playlist= stats_playlist)
 
 @app.route('/matches')
 def show_matches():

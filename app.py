@@ -17,7 +17,6 @@ app =Flask(__name__)
 #sess.init_app(app)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-#app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 
 @app.route('/')
@@ -41,15 +40,21 @@ def callback():
 
     code = request.args.get('code', -1) #this is optional
 
+    print(code)
+
 
     answer = spot.get_first_token(code)
+
+    print(answer)
 
     session['access_token'] = answer[0]
     session['access_token_expires'] = answer[2]
     session['refresh_token'] = answer[1]
     session['access_token_did_expire'] = answer[3]
 
-    return redirect("http://localhost:5000/intro", code=302)
+    return render_template('loading.html')
+
+
 
     
 

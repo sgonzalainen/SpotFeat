@@ -117,6 +117,15 @@
             padding: 10px 30px;
             }
 
+            .center {
+        margin: 0;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        }
+
 
 
 
@@ -130,21 +139,23 @@
 {% extends "parent.html" %}
 {% block content %}
 
-        <section style= "text-align: center; padding-top: 150px;padding-bottom: 50px;">
 
 
-            <img src= 'https://github.com/sgonzalainen/SpotFeat/blob/main/img/logo_black.png?raw=true' width=500px>
+            <div class="center">
+
+         
+                <img src= 'https://github.com/sgonzalainen/SpotFeat/blob/main/img/logo_black_v2.png?raw=true' width=500px>
+
+     
+
+
+        </div>
+
             
 
 
         
-        
-        
-        
-        
-        
-        
-        </section>
+ 
 
         {% endblock %}
 

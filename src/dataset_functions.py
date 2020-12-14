@@ -940,17 +940,7 @@ def keep_genre_songs(array, genre):
 
 
 
-def prepare_input_to_model(self):
 
-    data = self.mysql.get_info_for_model() 
-
-    X, y = mod.decode_input_model(data)
-
-
-
-    X_train, y_train, X_val, y_val, X_test, y_test = mod.split_train_val_test(X, y)
-
-    return X_train, y_train, X_val, y_val, X_test, y_test
 
 
 def retrieve_mfccs_song(self, song_id):

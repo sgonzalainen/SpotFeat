@@ -5,17 +5,43 @@ import time
 import datetime
 import src.spotify1 as spot
 import src.dataset_functions as dataset
-import base64
-from io import BytesIO
+
+from threading import Thread
+
+
+#from celery import Celery
+
+
 
 
 
 app =Flask(__name__, static_url_path="", static_folder="static")
 
+#app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+#app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+
+#celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+#celery.conf.update(app.config)
+
 
 #sess = Session()
 #sess.init_app(app)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+#@celery.task
+def background_video(headers):
+
+    print('running')
+
+    mytop_list = dataset.get_my_top(headers)
+
+    myvideo = dataset.create_video(mytop_list)
+
+    myvideo.write_videofile("static/movie.mp4", fps=24)
+
+
+
+
 
 
 
@@ -40,12 +66,12 @@ def callback():
 
     code = request.args.get('code', -1) #this is optional
 
-    print(code)
+   
 
 
     answer = spot.get_first_token(code)
 
-    print(answer)
+ 
 
     session['access_token'] = answer[0]
     session['access_token_expires'] = answer[2]
@@ -62,8 +88,29 @@ def callback():
 @app.route('/intro')
 def intro():
 
+    
+
     headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
     
+    #background thread
+
+    global thread
+
+    thread = Thread(target=background_video, args=(headers,))
+    thread.daemon = True
+
+    
+
+    thread.start()
+
+
+
+
+    #session['videoclip'] = False
+    #task = background_video.delay(headers)
+
+    #####################################################################
+
 
     session['access_token'] = access_token
     session['access_token_expires'] = access_token_expires
@@ -109,6 +156,9 @@ def intro():
 
 
     session['matches_info'] = dataset.get_my_matches(session['main_user'].get('id'))
+
+
+    
 
     
   
@@ -236,23 +286,34 @@ def trending_songs():
 @app.route('/mytop')
 def mytop():
 
-    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+    #headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
     
-    mytop_list = dataset.get_my_top(headers)
+    #mytop_list = dataset.get_my_top(headers)
 
-    myvideo = dataset.create_video(mytop_list)
+    #myvideo = dataset.create_video(mytop_list)
 
-    myvideo.write_videofile("static/movie.mp4", fps=24)
+    #myvideo.write_videofile("static/movie.mp4", fps=24)
+
+    if thread.is_alive():
+
+        return 'Not yet'
+
+    else:
+        user_name = session.get('main_user').get('name')
+        return render_template('top.html', user_name = user_name)
 
 
-    user_name = session.get('main_user').get('name')
+
+
+
+    
 
   
 
 
 
 
-    return render_template('top.html', user_name = user_name)
+    
 
 
 

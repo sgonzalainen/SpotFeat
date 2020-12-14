@@ -134,16 +134,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-        <section style= "text-align: center; padding-top: 150px;padding-bottom: 50px;">
+        <section style= "text-align: center; padding-top: 70px;padding-bottom: 50px;">
 
 
             <p style = "font-size: 30px";>
@@ -160,20 +151,35 @@
 
 
 
-        <section style= "text-align: center; padding-top: 20px;padding-bottom: 50px;">
+        <section style= "text-align: center; padding-top: 20px;padding-bottom: 20px;">
         
         
         
 
 
         <form action='/party' method = 'POST'>
+
+            <p style = "padding-top: 00px;padding-bottom: 50px;">
+
+            
+            <button style = 'background-color:#1DB954;
+        color: 	#FFFFFF;
+        border:none;
+        font-size:45px;
+        font-weight: bold;
+        font-family: Gotham;
+        border-radius: 25%;
+        width: 250px;
+        padding: 20px 24px;' type="submit" >Party</button>
+
+</p>
         
 
         <ul id="memb2">
 
             
         {% for num, other in other_users_info %}
-            {% if num % 4 != 0 %}
+            {% if num % 8 != 0 %}
 
             <li id="memb">
                 <input type="checkbox" name = member value = {{other.user_id}}  id="myCheckbox1{{num}}" />
@@ -200,15 +206,7 @@
 
         </ul>
 
-        <button style = 'background-color:#1DB954;
-        color: 	#FFFFFF;
-        border:none;
-        font-size:45px;
-        font-weight: bold;
-        font-family: Gotham;
-        border-radius: 25%;
-        width: 250px;
-        padding: 20px 24px;' type="submit" >Party</button>
+        
 
 
     </form>

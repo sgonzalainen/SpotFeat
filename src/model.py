@@ -4,6 +4,7 @@ import src.audio as audio
 from src.variables import AudioVar, DatasetVar, DatabaseVar
 import numpy as np
 from tensorflow import keras
+import matplotlib.pyplot as plt
 
 
 
@@ -71,22 +72,27 @@ def plot_history(history):
     fig, axs = plt.subplots(2)
 
     # create accuracy sublpot
-    axs[0].plot(history.history["accuracy"], label="train rmse")
-    axs[0].plot(history.history['val_accuracy'], label="val rmse")
-    axs[0].set_ylabel("Accuracy")
+    axs[0].plot(history.history["accuracy"], label="Train")
+    axs[0].plot(history.history['val_accuracy'], label="Val")
+    axs[0].set_ylabel("Accuracy %")
     axs[0].legend(loc="lower right")
     axs[0].set_title("Metric eval")
 
     # create error sublpot
-    axs[1].plot(history.history["loss"], label="train error")
-    axs[1].plot(history.history["val_loss"], label="val error")
-    axs[1].set_ylabel("Error")
+    axs[1].plot(history.history["loss"], label="Train")
+    axs[1].plot(history.history["val_loss"], label="Val")
+    axs[1].set_ylabel("MSE")
     axs[1].set_xlabel("Epoch")
     axs[1].legend(loc="upper right")
     axs[1].set_title("Error eval")
 
-    plt.show()
+    plt.subplots_adjust(top = 2)
 
+    
+
+    return fig
+
+    
 
 
 def get_prediction_prob(model, mfcc):
@@ -121,6 +127,14 @@ def import_model(model_path):
     model = keras.models.load_model(model_path)
     
     return model
+
+
+def save_model(model, model_path):
+    model.save(model_path)
+    
+
+
+
 
 
 

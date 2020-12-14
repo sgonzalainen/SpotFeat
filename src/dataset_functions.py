@@ -145,8 +145,8 @@ def insert_song_data(headers, song_id, col_name = 'song_id'):
                 else:
                     pass
 
-                if (data['preview_url'] is None): #if it is still none
-                    return False
+            if (data['preview_url'] is None): #if it is still none
+                return False
 
 
 
@@ -166,6 +166,8 @@ def insert_song_data(headers, song_id, col_name = 'song_id'):
             else:
                 insert_new_artist(headers, item['artist_id'])#check if artist in artist table
                 new = True #to know if a new user were introduced to update network community
+
+    return True
 
 
 
@@ -453,7 +455,7 @@ def update_user_profile_data(headers):
             pass #do nothing
 
 
-        if res == False: #it did not find preview url then abort inclusion
+        if not res: #it did not find preview url then abort inclusion
             continue
 
 
@@ -533,10 +535,25 @@ def find_songs_playlist(num_songs, users):
     df = create_structure_score_table(pool_songs, users)
     df = add_score_song_playlist(df)
 
-    df_selected = df.groupby('song_id').sum().sort_values('total_points',ascending=False).reset_index().head(num_songs)
+
+    df_preselected = df.groupby(['song_id','artist_id']).sum().sort_values('total_points',ascending=False).reset_index()
+
+
+    #artist_appear = []
+
+    #df_preselected.groupby('artist_id').
+
+
+
+    #df_selected = df.groupby('song_id').sum().sort_values('total_points',ascending=False).reset_index().head(num_songs)
 
 
     return df, df_selected
+
+
+def get_penalty_rep_artist(row):
+    pass
+
 
 
 def get_list_selected_songs(num_songs, users):
@@ -663,10 +680,7 @@ def add_score_song_playlist(df):
     df['popularity_points'] = df.apply(get_score_popularity, axis = 1)
     df['genre_points'] = df.apply(get_score_genre, axis = 1)
 
-
     df['total_points'] = df['top_song_points'] + df['top_artist_points'] + df['popularity_points'] + df['genre_points']
-
-
 
     return df
 
@@ -730,7 +744,15 @@ def create_structure_score_table(pool_songs, users):
         list_user  = [user] * len(pool_songs)
         column_user.extend(list_user)
 
-    data = {'user_id': column_user, 'song_id': column_songs}
+    column_artist = [] #for penalizing repeated artist
+    for song in column_songs:
+        artist_name = list(mysql.get_artist_by_song_id(song))[0][0]
+        column_artist.append(artist_name)
+
+
+
+
+    data = {'user_id': column_user, 'song_id': column_songs, 'artist_id': column_artist}
     df = pd.DataFrame(data)
 
     return df
@@ -1406,6 +1428,8 @@ def collect_info_new_playlist(headers, song_id_list):
     return info_playlist
 
 def get_info_song_dict_by_id(song):
+
+    print(song)
 
     match = list(mysql.fetch_report_song(song))[0]
 

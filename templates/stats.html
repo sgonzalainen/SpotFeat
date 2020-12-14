@@ -263,6 +263,35 @@
             
             }
 
+            .tooltip {
+                position: relative;
+
+  ;
+            }
+
+
+            .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: rgba(36, 34, 34, 0.342);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+
+            /* Position the tooltip */
+            position: absolute;
+            z-index: 1;
+            top: -5px;
+            left: -120%;
+            }
+
+
+        .tooltip:hover span.tooltiptext{
+            visibility: visible;
+}
+
+
 
 
        
@@ -332,17 +361,17 @@
             <table class="center">
 
                 <tr>
-                    <td>Musical Age</td>
+                    <td class = "tooltip"> Musical Age <span class="tooltiptext">Average age of all your short (last 4 weeks), medium (last 6 months) and long (historical) term Top-50 songs. </span></td>
                       <td><span class="funstat">{{user_profile.avg_age}}</span> </td>
                       <td>Years</td>
                 </tr>
                 <tr>
-                    <td>Popularity Taste Rating</td>
+                    <td class = "tooltip">Popularity Taste Rating <span class="tooltiptext">Average popularity rating of all your short (last 4 weeks), medium (last 6 months) and long (historical) term Top-50 songs. Song's popularity rating given by Spotify. </span></td>
                       <td><span class="funstat">{{user_profile.avg_popu}}</span></td>
                       <td>Points</td>
                 </tr>
                 <tr>
-                    <td>Avg. {{ref_artist}} Distance</td>
+                    <td class = "tooltip">{{ref_artist}} Distance <span class="tooltiptext">Average distance to {{ref_artist}} for your historical Top-20 artists. Community of artists created by Spotify recommended artists related to a specific artist.</span></td>
                       <td><span class="funstat">{{user_profile.avg_dis}}</span></td>
                       <td>Degrees</td>
                 </tr>

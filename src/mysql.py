@@ -246,6 +246,14 @@ class MysqlConn():
         return self.conn.execute(query)
 
 
+    def get_artist_by_song_id(self, song_id):
+
+        query = f"SELECT c.artist_id FROM songs a INNER JOIN artist_song b ON a.song_id = b.song_id INNER JOIN artist c ON c.artist_id=b.artist_id WHERE a.song_id = '{song_id}';"
+
+        return self.conn.execute(query)
+
+
+
 
 
 

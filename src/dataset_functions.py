@@ -535,24 +535,40 @@ def find_songs_playlist(num_songs, users):
     df = create_structure_score_table(pool_songs, users)
     df = add_score_song_playlist(df)
 
-
+    
     df_preselected = df.groupby(['song_id','artist_id']).sum().sort_values('total_points',ascending=False).reset_index()
 
+    global pool_artist
 
-    #artist_appear = []
-
-    #df_preselected.groupby('artist_id').
+    pool_artist = []
 
 
+
+    df_preselected['corrected_score'] = df_preselected.apply(get_penalty_rep_artist, axis = 1)
+
+    df_selected = df_preselected.sort_values('corrected_score',ascending=False).reset_index().head(num_songs)
 
     #df_selected = df.groupby('song_id').sum().sort_values('total_points',ascending=False).reset_index().head(num_songs)
+    #this was without correction by repetitive artists
 
 
     return df, df_selected
 
 
 def get_penalty_rep_artist(row):
-    pass
+
+    
+
+    artist = row['artist_id']
+
+    num_appear = pool_artist.count(artist)
+
+    pool_artist.append(artist)
+
+    corrected_score = row['total_points'] / ((1 + (num_appear/10))**ScoringVar.penalty_exponent)
+
+    return corrected_score
+
 
 
 

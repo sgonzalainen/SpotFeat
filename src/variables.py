@@ -64,6 +64,7 @@ class Community():
 class ScoringVar():
     top_artist = 50
     genre = 50
+    penalty_exponent = 3
 
     
 

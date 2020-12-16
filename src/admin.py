@@ -324,7 +324,7 @@ class Admin():
         return model
 
 
-    def train_model(self, model)
+    def train_model(self, model):
 
         X_train, y_train, X_val, y_val, X_test, y_test = prepare_input_to_model()
 

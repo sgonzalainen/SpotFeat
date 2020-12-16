@@ -350,9 +350,11 @@ def update_user_profile_data(headers):
 
     print('Task done')
 
-    print('Updating albums database')
+    print('Updating albums database if needed')
 
     update_albums_table_missing(headers) #this checks if new albums have been introduced and scrapes data
+    print('Updating artist database if needed')
+    update_missing_artists(headers) #this check if some artist is missing in table for some trailing error
 
     print('Task done')
 
@@ -654,7 +656,8 @@ def create_structure_score_table(pool_songs, users):
 
     column_artist = [] #for penalizing repeated artist
     for song in column_songs:
-        artist_name = list(mysql.get_artist_by_song_id(song))[0][0]
+        print(song)
+        artist_name = list(mysql.get_artist_by_song_id(song))[0][0] #we pick first artist
         column_artist.append(artist_name)
 
 
@@ -1407,6 +1410,8 @@ def update_albums_table_missing(headers):
 
     for album in albums_to_scrape:
 
+        print(f"{album} album not in database")
+
         data = spotify.get_album_info(headers,album)
 
         album_dict = {}
@@ -1424,6 +1429,39 @@ def update_albums_table_missing(headers):
 
         for artist in data['artists']:
             mysql.insert_mysql('artist_album',{'artist_id' : artist['id'], 'album_id': album})
+
+
+def update_missing_artists(headers):
+    artist_to_scrape = [artist[0] for artist in list(mysql.fetch_artist_in_songs_null())]
+
+    for artist in artist_to_scrape:
+        print(f"{artist} artist not in database")
+        data = spotify.get_artist_info(artist, headers)
+
+        tmp_dict = {}
+
+        tmp_dict['artist_id'] = artist
+        tmp_dict['name'] = data['name'][0:100]
+        tmp_dict['popularity'] = data['popularity']
+        tmp_dict['followers'] = data['followers']['total']
+
+        try:
+            tmp_dict['img_url'] = data['images'][0]['url']
+        except IndexError:
+            tmp_dict['img_url'] = ''
+
+
+        mysql.insert_mysql('artist', tmp_dict) #inserted into mysql table artist
+        data = spotify.get_artist_related(artist, headers).get('artists') #list of artist related
+
+        for element in data: #for each artist related
+            id_tmp = element['id']
+            tmp_dict = {'main_id': artist, 'rel_id': id_tmp}
+            mysql.insert_mysql('artist_rel', tmp_dict)
+
+
+
+
 
 
 def create_video(mytop_list):

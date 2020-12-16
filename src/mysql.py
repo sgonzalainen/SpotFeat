@@ -245,6 +245,13 @@ class MysqlConn():
         return self.conn.execute(query)
 
 
+    def fetch_artist_in_songs_null(self):
+        
+        query = f"SELECT DISTINCT(b.artist_id) FROM songs a LEFT JOIN artist_song b ON a.song_id = b.song_id LEFT JOIN artist c ON c.artist_id = b.artist_id WHERE c.artist_id IS NULL;"
+
+        return self.conn.execute(query)
+
+
 
 
 
@@ -270,11 +277,7 @@ class MysqlAdmin(MysqlConn):
     
 
 
-    def fetch_artist_in_songs_null(self):
-        
-        query = f"SELECT DISTINCT(b.artist_id) FROM songs a LEFT JOIN artist_song b ON a.song_id = b.song_id LEFT JOIN artist c ON c.artist_id = b.artist_id WHERE c.artist_id IS NULL;"
-
-        return self.conn.execute(query)
+    
 
 
     def get_info_for_model(self, table_name = 'songs', field_col = 'mfccs, genre', id_col = 'genre'):

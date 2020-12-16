@@ -131,10 +131,10 @@ def intro():
     genre_list, values_list = dataset.genre_profile_api(user_id)
 
     
-    session['main_user'] = {'id': user_id, 'name': user_name, 'img_url': user_img, 'avg_dis': avg_distance, 'min_dis': min_distance, 'path_dis': path_distance, 'avg_popu': avg_popularity, 'avg_age': avg_age, 'values_chart': values_list }
+    session['main_user'] = {'user_id': user_id, 'name': user_name, 'img_url': user_img, 'avg_dis': avg_distance, 'min_dis': min_distance, 'path_dis': path_distance, 'avg_popu': avg_popularity, 'avg_age': avg_age, 'values_chart': values_list }
     session['chart_labels'] = genre_list
 
-    session['matches_info'] = dataset.get_my_matches(session['main_user'].get('id'))
+    session['matches_info'] = dataset.get_my_matches(session['main_user'].get('user_id'))
 
 
     print('Scraping of user info completed')
@@ -151,7 +151,7 @@ def stats():
 
 
 
-    user_id = session['main_user'].get('id')
+    user_id = session['main_user'].get('user_id')
 
     genre_list, values_list = dataset.genre_profile_api(user_id)
 
@@ -162,7 +162,7 @@ def stats():
 @app.route('/users/<user_id>')
 def user_stats(user_id):
 
-    main_user = session['main_user'].get('id')
+    main_user = session['main_user'].get('user_id')
 
     user_profile = dataset.get_full_info_user(user_id)
 
@@ -192,12 +192,18 @@ def user_stats(user_id):
 
     user_profile['score']= match_score
 
+    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+
+    following = spot.check_follow(headers, user_id)[0]
+
+    print(following)
 
 
 
 
 
-    return render_template('other_stats.html', main_user_profile = session['main_user'], user_profile = user_profile, chart_labels = genre_list, chart_values= values_list)
+
+    return render_template('other_stats.html', main_user_profile = session['main_user'], user_profile = user_profile, chart_labels = genre_list, chart_values= values_list, following = following)
 
 
 @app.route('/select_members')
@@ -205,7 +211,7 @@ def select_members():
 
     headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
 
-    main_user_id = session.get('main_user').get('id')
+    main_user_id = session.get('main_user').get('user_id')
 
     other_users_info = enumerate(dataset.get_other_users_info(main_user_id))
 
@@ -218,7 +224,7 @@ def party():
 
     headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
 
-    main_user_id = session.get('main_user').get('id')
+    main_user_id = session.get('main_user').get('user_id')
 
     members = request.form.getlist('member')
 
@@ -244,6 +250,31 @@ def show_matches():
     
 
     return render_template('matches.html', other_users_info = enumerate(other_users_info))
+
+
+@app.route('/follow_user/<user_id>')
+def follow_user(user_id):
+
+
+    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+
+    spot.follow_user(headers, user_id)
+
+
+
+    return redirect(f"/users/{user_id}", code=302)
+
+@app.route('/unfollow_user/<user_id>')
+def unfollow_user(user_id):
+
+
+    headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
+
+    spot.unfollow_user(headers, user_id)
+
+
+
+    return redirect(f"/users/{user_id}", code=302)
 
 
 @app.route('/trending')

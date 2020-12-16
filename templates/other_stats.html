@@ -323,14 +323,56 @@
                 {{user_profile.name}}
             </p>
 
-            <p style = "font-size: 60px; margin:0.5;color:#1DB954 ;";>
+            <p style = "font-size: 60px; margin:0.5;color:#1DB954;">
 
                 {{user_profile.score}} % 🎯
             </p>
 
-            <p class="clear">
+            {% if following %}
 
-            </p>
+            <p style = 'padding-right: 50 px;'>
+                You follow this user on Spotify &nbsp&nbsp&nbsp   
+            
+
+            <a href="/unfollow_user/{{user_profile.user_id}}">
+
+                <button  style = 'background-color:#1DB954;
+            color: 	#FFFFFF;
+            border:none;
+            font-size:20px;
+            font-weight: bold;
+            border-radius: 25%;
+            width: 150px;
+            padding: 10px 14px;' >Unfollow</button>
+
+    
+            </a>
+
+        </p>
+
+
+            {% else %}
+            
+    
+            <a href="/follow_user/{{user_profile.user_id}}">
+
+                <button  style = 'background-color:#1DB954;
+            color: 	#FFFFFF;
+            border:none;
+            font-size:20px;
+            font-weight: bold;
+            border-radius: 25%;
+            width: 150px;
+            padding: 10px 14px;' >Follow</button>
+
+    
+            </a>
+
+
+            {% endif %}
+
+
+            
 
 
             

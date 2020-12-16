@@ -18,7 +18,7 @@ def get_auth():
     query_params = urlencode({"response_type": 'code',
                                 'redirect_uri': redirect_uri,
                                 'show_dialog':True,
-                                'scope':'user-read-playback-state user-top-read user-modify-playback-state user-read-private playlist-modify-private playlist-modify-public',
+                                'scope':'user-read-playback-state user-follow-read user-follow-modify user-top-read user-modify-playback-state user-read-private playlist-modify-private playlist-modify-public',
                                 "client_id": client_id})
     
     lookup_url = f"{mother_link}?{query_params}"
@@ -261,6 +261,39 @@ def get_album_info(headers, album_id):
         r = requests.get(endpoint,headers=headers)
 
         return r.json()
+
+
+def check_follow(headers, user_id):
+
+        endpoint = f'https://api.spotify.com/v1/me/following/contains'
+
+        params = {'type': 'user', 'ids': user_id}
+
+        r = requests.get(endpoint,headers=headers, params = params)
+
+        return r.json()
+
+
+def follow_user(headers, user_id):
+
+        endpoint = f'https://api.spotify.com/v1/me/following'
+
+        params = {'type': 'user', 'ids': user_id}
+
+        r = requests.put(endpoint,headers=headers, params = params)
+
+        return r
+
+
+def unfollow_user(headers, user_id):
+
+        endpoint = f'https://api.spotify.com/v1/me/following'
+
+        params = {'type': 'user', 'ids': user_id}
+
+        r = requests.delete(endpoint,headers=headers, params = params)
+
+        return r
 
 
 

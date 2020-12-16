@@ -1,6 +1,6 @@
 from src.variables import AudioVar, DatasetVar, DatabaseVar, ScoringVar, Community
 
-import src.spotify1 as spotify
+import src.spotify as spotify
 from src.mysql import mysql as mysql
 import src.network as net
 
@@ -1386,8 +1386,16 @@ def get_my_top(headers):
 
     info_top = []
     for song in top_songs:
-        info_song = get_info_song_dict_by_id(song)
-        info_top.append(info_song)
+
+        try:
+
+            info_song = get_info_song_dict_by_id(song)
+
+        except:
+            continue
+
+        else:
+            info_top.append(info_song)
 
     return info_top
 

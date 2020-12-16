@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, session, redirect, jsonify
 import time
 import datetime
-import src.spotify1 as spot
+import src.spotify as spot
 import src.dataset_functions as dataset
 from threading import Thread
 from src.config import app_secret_key
@@ -260,7 +260,7 @@ def trending_songs():
 def mytop():
 
     user_name = session.get('main_user').get('name')
-    cond = os.path.exists('data/working.txt')
+    cond = os.path.exists('./data/working.txt')
 
     if cond:
 

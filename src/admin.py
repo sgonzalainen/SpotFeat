@@ -9,10 +9,7 @@ from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 
 
-
-
-
-from src.spotify1 import SpotifyAdmin as spotify
+from src.spotify import SpotifyAdmin as spotify
 
 
 class Admin():

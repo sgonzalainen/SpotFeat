@@ -475,14 +475,15 @@
     Chart.defaults.global.elements.rectangle.borderWidth = 1;
     Chart.defaults.scale.gridLines.color = '#444';
     Chart.defaults.scale.ticks.display = false;
+    Chart.defaults.global.defaultFontStyle = 'Bold'
 
         var labels_val = {{chart_labels|safe }};
         var values_val = {{user_profile.values_chart|safe }};
 
         const styles = {
     color: {
-        solids: ['rgba(0, 250, 0, 1)','rgba(116, 72, 194, 1)', 'rgba(33, 192, 215, 1)', 'rgba(217, 158, 43, 1)', 'rgba(205, 58, 129, 1)', 'rgba(156, 153, 204, 1)', 'rgba(225, 78, 202, 1)'],
-           alphas: ['rgba(0, 250, 0, .2)','rgba(116, 72, 194, .2)', 'rgba(33, 192, 215, .2)', 'rgba(217, 158, 43, .2)', 'rgba(205, 58, 129, .2)', 'rgba(156, 153, 204, .2)', 'rgba(225, 78, 202, .2)']
+        solids: ['rgba(30, 215, 96, 1)','rgba(116, 72, 194, 1)', 'rgba(33, 192, 215, 1)', 'rgba(217, 158, 43, 1)', 'rgba(205, 58, 129, 1)', 'rgba(156, 153, 204, 1)', 'rgba(225, 78, 202, 1)'],
+           alphas: ['rgba(30, 215, 96, .2)','rgba(116, 72, 194, .2)', 'rgba(33, 192, 215, .2)', 'rgba(217, 158, 43, .2)', 'rgba(205, 58, 129, .2)', 'rgba(156, 153, 204, .2)', 'rgba(225, 78, 202, .2)']
     }
 };
 

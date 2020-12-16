@@ -2,18 +2,10 @@
 <html>
     <head>
 
-        <title> 
-
-            {% block title %}{% endblock %}
-
-
-
-        </title>
-
 
     </head>
         <style>
-            
+ 
 
 
             body {
@@ -21,7 +13,7 @@
             }
             body h1 {
             position: fixed;
-            top: 10px;
+            top: 40px;
             left: 40px;
             z-index: 6;
             font-size: 20px;
@@ -107,7 +99,7 @@
             font-weight: 700;
             font-family: sans-serif;
             display: block;
-            padding: 20px;
+            padding: 30px;
             }
             body input:checked ~ nav {
             height: 80%;
@@ -123,7 +115,64 @@
             line-height: 2;
             }
 
- 
+            td {
+            padding: 10px 30px;
+            }
+
+
+
+            
+            
+            .grid-container {
+            display: grid;
+            grid-column-gap: 100px;
+            grid-template-columns: auto auto auto auto auto;
+            grid-template-rows: auto auto auto auto auto auto;
+            background-color:black;
+            grid-gap: 50px;
+            padding: 10px;
+            row-gap: 100px;
+            }
+
+            .grid-item {
+            background-color: rgba(37, 37, 37, 0.178);
+            border: 1px solid rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            font-size: 15px;
+            text-align: center;
+            position: relative;}
+
+
+            .center {
+            margin-left: auto;
+            margin-right: auto;
+            display: block
+        }
+
+
+            hr.new {
+            border: 1px solid #1DB954;
+            border-radius: 1px;
+            margin: 0px 70px;
+            }
+
+            .gif {
+            background-image:url("https://github.com/sgonzalainen/SpotFeat/blob/main/img/wait.gif?raw=true");
+            width:480px;
+            height:201px;
+            margin-left: auto;
+            margin-right: auto;
+            
+          }
+            
+
+
+
+
+
+
+
+                    
 
 
 
@@ -135,51 +184,39 @@
 
 
 
+{% extends "parent.html" %}
+{% block content %}
+
+
+<section style= "text-align: center; padding-top: 150px;padding-bottom: 50px;">
+
+    <p style = "font-size: 30px";>
+
+        Awesomeness takes time. Just hold on a bit, your top songs will be ready shortly.
+
+    </p>
+
+
+    <hr class="new">
+
+
+
+</section>
+
+
+
+
+    <section style= "text-align: left; padding-top: 40px;padding-bottom: 50px;">
+
+        <div class= "gif"></div>
+  </video>
 
 
 
 
 
-
- 
-
-
-    <body style="background-color:#000000; color: white; font-family: Arial, Helvetica, sans-serif;
-    font-weight: bold;">
-
-<h1>
-    <img src= 'https://github.com/sgonzalainen/SpotFeat/blob/main/img/logo_black_green.png?raw=true' width=150px>
-
-    
-    
-     <span>by Sergio González</span></h1>
-
-<input id="burger" type="checkbox" />
-
-<label for="burger">
-    <span></span>
-    <span></span>
-    <span></span>
-</label>
-
-<nav>    
-  <ul>
-    <li><a href="http://localhost:5000/stats">My Stats <span class="emoji">📈</span></a></li>
-    <li><a href="http://localhost:5000/mytop">My Top50 Songs<span class="emoji">🔝</span></a></li>
-    <li><a href="http://localhost:5000/trending">My Trending Songs<span class="emoji">🔥</span></a></li>
-    <li><a href="http://localhost:5000/matches">My Matches<span class="emoji">🎯</span></a></li>
-    <li><a href="http://localhost:5000/select_members">Party Mode <span class="emoji">🎉</span></a></li>
-  </ul>  
-</nav>
-
-    {% block content %}
-
-
-    {% endblock %}
-
-
-    </body>
+</section>
 
 
 
-
+{% endblock %}

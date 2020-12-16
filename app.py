@@ -259,14 +259,15 @@ def trending_songs():
 @app.route('/mytop')
 def mytop():
 
+    user_name = session.get('main_user').get('name')
     cond = os.path.exists('data/working.txt')
 
     if cond:
 
-        return 'Not yet'
+        return render_template('top_pending.html', user_name = user_name)
 
     else:
-        user_name = session.get('main_user').get('name')
+        
         return render_template('top.html', user_name = user_name)
 
 

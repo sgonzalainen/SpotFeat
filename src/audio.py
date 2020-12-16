@@ -4,6 +4,8 @@ import librosa
 import audioread
 import numpy as np
 import moviepy.editor as mpy
+import matplotlib.pyplot as plt
+import librosa.display
 
 sample_rate = AudioVar.sample_rate
 n_mfcc = AudioVar.n_mfcc
@@ -112,6 +114,21 @@ def merge_video_clips(videoclips):
 
     return merged_videoclip
 
+
+
+def plot_mfcc(mfcc,sample_rate=sample_rate,hop_length=hop_length):
+    '''This function plots mfcc'''
+    #plt.figure()
+    fig, ax = plt.subplots()
+    im=librosa.display.specshow(mfcc, sr=sample_rate, hop_length=hop_length,ax=ax)
+
+    plt.xlabel("Time")
+    plt.ylabel("MFCC coefficients")
+    
+    fig.colorbar(im)
+    plt.title("MFCCs")
+    
+    return fig
 
 
 

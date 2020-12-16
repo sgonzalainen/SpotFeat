@@ -1,6 +1,14 @@
 from src.mysql import MysqlAdmin as mysql_admin
 from src.config import db_name, password_mysql, user_mysql
 import src.model as mod
+import numpy as np
+import src.audio as audio
+from src.variables import AudioVar
+import seaborn as sns
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+
+
 
 
 
@@ -207,6 +215,146 @@ class Admin():
         songs_id_list = list(set(songs_id_list))
 
         return songs_id_list
+
+
+    def update_predictions_database(self):
+
+        model = mod.import_model('../model/mymodel')
+
+        data = np.array(list(self.mysql.get_all_songs('songs')))
+
+        for song in data:
+            song_id = song[0]
+
+            mfcc_decoded = audio.decode_mfccs(song[1], AudioVar.n_mfcc)
+
+            preds = mod.get_prediction_prob(model, mfcc_decoded)
+
+            genre = mod.find_genre_max(preds)
+
+            encoded_preds = mod.encode_prediction_prob(preds)
+
+            self.mysql.update_prediction(genre, encoded_preds, song_id)
+
+
+    def get_confusion_matrix_and_accuracy(self, X_test, y_test):
+        predictions_test = model.predict(X_test)
+
+        merge_pred = []
+        y_test_merge = []
+        for i in range(232):
+            song = predictions_test[i*3:(i+1)*3]
+            song = song.mean(axis=0)
+            merge_pred.append(song)
+            y_merge = y_test[i*3]
+            y_test_merge.append(y_merge)
+            
+            
+        predictions_merge = np.array(merge_pred).argmax(axis=1)
+        y_test_merge = np.array(y_test_merge)
+
+        accuracy_test = accuracy_score(y_test_merge, predictions_merge)
+
+        #
+
+        confusion_matrix = metrics.confusion_matrix(y_test_merge, predictions_merge)
+        cm_nor = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
+
+        x_axis_labels = ['rock', 'electro', 'rap', 'classic', 'reggaeton', 'jazz', 'pop']
+
+        sns.heatmap(cm_nor, cmap="Greens", annot=True, xticklabels=x_axis_labels, yticklabels = x_axis_labels)
+
+        plt.savefig('confusion_mat',bbox_inches='tight', dpi= 600)
+
+
+
+
+
+        return accuracy_test, plt
+
+    def create_model(self):
+
+        model = keras.Sequential([
+
+        # 1st conv step
+        keras.layers.Conv2D(64,(3,3),activation='relu',input_shape=(X_train.shape[1], X_train.shape[2],1),padding='same'),
+        
+        keras.layers.MaxPooling2D((2,2),strides=(2,3)),
+    
+        keras.layers.BatchNormalization(),
+    
+    
+        # 2nd conv step
+    
+        keras.layers.Conv2D(64,(3,3),activation='relu',padding='same'),
+        
+        keras.layers.MaxPooling2D((2,2),strides=(2,3)),
+    
+        keras.layers.BatchNormalization(),
+    
+    
+        # 3rd conv step
+    
+        keras.layers.Conv2D(64,(3,3),activation='relu',padding='same'),
+        
+        keras.layers.MaxPooling2D((1,2),strides=(1,2)),
+    
+        keras.layers.BatchNormalization(),
+    
+    
+
+    
+    
+        keras.layers.Flatten(),
+
+    
+        keras.layers.Dense(1000, activation='relu',kernel_regularizer=tf.keras.regularizers.l2(0.14)),
+
+        keras.layers.Dense(500, activation='relu',kernel_regularizer=tf.keras.regularizers.l2(0.14)),
+      
+        keras.layers.Dense(250, activation='relu',kernel_regularizer=tf.keras.regularizers.l2(0.13)),
+    
+        keras.layers.Dense(125, activation='relu',kernel_regularizer=tf.keras.regularizers.l2(0.13)),
+
+        keras.layers.Dense(30, activation='relu',kernel_regularizer=tf.keras.regularizers.l2(0.13)),
+  
+        keras.layers.Dense(15),
+    
+        keras.layers.Dense(7, activation='softmax'),
+    
+        ])
+
+        return model
+
+
+    def train_model(self, model)
+
+        X_train, y_train, X_val, y_val, X_test, y_test = prepare_input_to_model()
+
+
+        optimiser = keras.optimizers.Adam(learning_rate=0.00012)
+        model.compile(optimizer=optimiser,
+                        loss='sparse_categorical_crossentropy',
+                        metrics=['accuracy'])
+
+
+        model.summary()
+
+        history = model.fit(X_train, y_train, validation_data=(X_val, y_val), batch_size=500, epochs=200)
+
+
+        return model, history
+
+
+
+
+
+
+
+
+
+
+
 
 
 

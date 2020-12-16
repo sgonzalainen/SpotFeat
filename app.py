@@ -1,37 +1,25 @@
 from flask import Flask, request, render_template, session, redirect, jsonify
-from src.spotifyAPI import SpotifyAPI
 import time
-#from flask_session import Session
 import datetime
 import src.spotify1 as spot
 import src.dataset_functions as dataset
-
 from threading import Thread
+from src.config import app_secret_key
 
-
-#from celery import Celery
-
-
+import os
 
 
 
 app =Flask(__name__, static_url_path="", static_folder="static")
 
-#app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-#app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-
-#celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-#celery.conf.update(app.config)
+app.secret_key = app_secret_key
 
 
-#sess = Session()
-#sess.init_app(app)
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-
-#@celery.task
 def background_video(headers):
+    
+    file = open("data/working.txt", "w") 
 
-    print('running')
+    print('Video is being generated in the background')
 
     mytop_list = dataset.get_my_top(headers)
 
@@ -39,9 +27,10 @@ def background_video(headers):
 
     myvideo.write_videofile("static/movie.mp4", fps=24)
 
+    print('Video has been created')
 
-
-
+    os.remove("data/working.txt")
+    
 
 
 
@@ -60,6 +49,8 @@ def start():
     r = spot.get_auth()
 
     return f""
+
+
 
 @app.route('/callback')
 def callback():
@@ -89,25 +80,17 @@ def callback():
 def intro():
 
     
-
+    
     headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
     
-    #background thread
+    
 
-    global thread
-
+    #background pseudo thread
     thread = Thread(target=background_video, args=(headers,))
     thread.daemon = True
 
-    
-
     thread.start()
 
-
-
-
-    #session['videoclip'] = False
-    #task = background_video.delay(headers)
 
     #####################################################################
 
@@ -115,6 +98,7 @@ def intro():
     session['access_token'] = access_token
     session['access_token_expires'] = access_token_expires
 
+    
     user_profile, user_top_songs = dataset.update_user_profile_data(headers)
 
     user_name = user_profile.get('name')
@@ -122,7 +106,6 @@ def intro():
     user_img = user_profile.get('img_url')
 
 
-    ###this mostt likelty to be removedddd #####
     if user_img == '':
         user_img = 'https://pbs.twimg.com/media/EFIv5HzUcAAdjhl?format=png&name=360x360'
 
@@ -145,25 +128,16 @@ def intro():
     
     session['ref_artist'] = ref_artist
 
-
     genre_list, values_list = dataset.genre_profile_api(user_id)
 
     
-
     session['main_user'] = {'id': user_id, 'name': user_name, 'img_url': user_img, 'avg_dis': avg_distance, 'min_dis': min_distance, 'path_dis': path_distance, 'avg_popu': avg_popularity, 'avg_age': avg_age, 'values_chart': values_list }
-    
     session['chart_labels'] = genre_list
-
 
     session['matches_info'] = dataset.get_my_matches(session['main_user'].get('id'))
 
 
-    
-
-    
-  
-
-
+    print('Scraping of user info completed')
 
 
     
@@ -183,7 +157,6 @@ def stats():
 
 
 
-
     return render_template('stats.html', user_profile = session['main_user'],ref_artist = session['ref_artist'] ,chart_labels = genre_list, chart_values= values_list)
 
 @app.route('/users/<user_id>')
@@ -199,7 +172,6 @@ def user_stats(user_id):
 
     path_distance = list(map(dataset.extract_url_img_by_artist_name, path_distance))
 
-    #avg_distance, min_distance, path_distance, ref_artist = dataset.get_info_distances_artist_ref(user_id)
     avg_age = dataset.get_years_user(user_id)
 
 
@@ -253,9 +225,10 @@ def party():
     members.insert(0, main_user_id)
 
     headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
-    num_songs = 50 # to be changeedeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+    
 
-    song_id_list, url_playlist, stats_playlist = dataset.create_mix_playlist(headers, num_songs, members)
+
+    song_id_list, url_playlist, stats_playlist = dataset.create_mix_playlist(headers, members)
 
     info_playlist = dataset.collect_info_new_playlist(headers, song_id_list)
 
@@ -286,15 +259,9 @@ def trending_songs():
 @app.route('/mytop')
 def mytop():
 
-    #headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
-    
-    #mytop_list = dataset.get_my_top(headers)
+    cond = os.path.exists('data/working.txt')
 
-    #myvideo = dataset.create_video(mytop_list)
-
-    #myvideo.write_videofile("static/movie.mp4", fps=24)
-
-    if thread.is_alive():
+    if cond:
 
         return 'Not yet'
 
@@ -303,17 +270,6 @@ def mytop():
         return render_template('top.html', user_name = user_name)
 
 
-
-
-
-    
-
-  
-
-
-
-
-    
 
 
 
@@ -332,42 +288,6 @@ def get_profile_api(user_id):
     
 
     return jsonify(dataset.genre_profile_api(user_id))
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

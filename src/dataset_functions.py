@@ -17,9 +17,11 @@ import re
 from sklearn.metrics.pairwise import cosine_similarity
 
 import collections
+import requests
 
 
 path_temp_mp3 = AudioVar.path_temp_mp3
+path_temp_mp3_video = AudioVar.path_temp_mp3_video
 
 from src.config import client_id,client_secret, redirect_uri
 
@@ -36,20 +38,6 @@ model = mod.import_model(AudioVar.model_path)
 
 
 
-
-def get_artist_albums_id(self, data):
-    
-    '''
-    data = user.get_artist_albums_json(artist_id)
-
-
-    '''
-    albums_id = []
-    
-    for album in data:
-        albums_id.append(album['id'])
-        
-    return albums_id
 
 
 
@@ -172,116 +160,7 @@ def insert_song_data(headers, song_id, col_name = 'song_id'):
 
 
 
-def get_all_artists_id(self, playlist_id):
 
-    songs_num = 100 #for first round
-    offset = 0
-    artists_id_list = []
-
-    while songs_num == 100:
-
-        data = self.spotify.get_playlist_items_json(playlist_id, offset = offset)['items']
-        
-        artists_id_list.extend(self.get_artists_ids_from_json(data))
-
-        songs_num = len(data)
-        
-        offset += songs_num #this is to know if new round moving offset is needed
-
-    artists_id_list = list(set(artists_id_list))
-
-    return artists_id_list
-
-def get_artists_ids_from_json(self, data):
-
-    temp_list = []
-
-    for song in data:
-        artist_id = song['track']['artists'][0]['id'] #for database collection we track only first artist to get top tracks
-        temp_list.append(artist_id)
-        
-        
-    return temp_list
-
-def get_songs_ids_from_json(self, data):
-
-    temp_list = []
-
-    for song in data:
-        song_id = song['track']['id'] #for database collection we track only first artist to get top tracks
-        temp_list.append(song_id)
-        
-        
-    return temp_list
-
-
-def get_artist_top_tracks_ids(self, data):
-
-    top_songs_id = []
-    
-    for song in data['tracks']:
-        
-        top_songs_id.append(song['id'])
-        
-    return top_songs_id
-
-
-
-def create_dataset_genre_by_top_tracks(self, playlist_id, genre):
-
-    table_name = self.songs_table
-    
-    artist_list = self.get_all_artists_id(playlist_id)
-
-
-    for artist in tqdm(artist_list):
-        
-        data = self.spotify.get_artist_top_tracks_json(artist)
-        song_list = self.get_artist_top_tracks_ids(data)
-        
-        for song in tqdm(song_list):
-
-            if self.mysql.check_in_table(table_name, 'song_id', song):
-                pass
-            else:
-                self.insert_song_data(song) #this inserts song into mysql with data
-                self.mysql.update_database(table_name, 'song_id', 'genre', song, genre)
-
-
-def create_dataset_genre_by_songs(self, playlist_id, genre):
-
-    table_name = self.songs_table
-    
-    songs_list = self.get_all_song_ids_playlist(playlist_id)
-
-    for song in tqdm(songs_list):
-
-        if self.mysql.check_in_table(table_name, 'song_id', song):
-            pass
-        else:
-            self.insert_song_data(song) #this inserts song into mysql with data
-            self.mysql.update_database(table_name, 'song_id', 'genre', song, genre)
-
-
-def get_all_song_ids_playlist(self, playlist_id):
-
-    songs_num = 100 #for first round
-    offset = 0
-    songs_id_list = []
-
-    while songs_num == 100:
-
-        data = self.spotify.get_playlist_items_json(playlist_id, offset = offset)['items']
-        
-        songs_id_list.extend(self.get_songs_ids_from_json(data))
-
-        songs_num = len(data)
-        
-        offset += songs_num #this is to know if new round moving offset is needed
-
-    songs_id_list = list(set(songs_id_list))
-
-    return songs_id_list
 
 
 def get_my_full_top_50(headers):
@@ -383,7 +262,7 @@ def collect_my_user_profile(headers):
 def update_user_profile_data(headers):
 
 
-    #aquí falta desarollar top artistas !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+    print('Scraping data of login user')
     user_profile, user_top_songs, user_top_artists = collect_my_user_profile(headers)
 
     user_id = user_profile['user_id']
@@ -393,6 +272,7 @@ def update_user_profile_data(headers):
     
 
     ##Update users table
+    print('Updating user info to database')
 
     if mysql.check_in_table(table_name, main_col, user_id):
 
@@ -404,9 +284,12 @@ def update_user_profile_data(headers):
     else:
         mysql.insert_mysql(table_name, user_profile)
 
+    print('Task done')
+
     ##### Update user_artist table  #############################
     
-    
+    print('Updating user artists to database')
+
     if mysql.check_in_table('user_artist', 'user_id', user_id):
         mysql.delete_where('user_artist', user_id, 'user_id') #delete
     else:
@@ -425,12 +308,14 @@ def update_user_profile_data(headers):
         data  = {'user_id': user_id, 'artist_id': artist}
         mysql.insert_mysql('user_artist', data)
 
-    
+    print('Task done')
         
         
   
 
     ##Update users_songs table
+
+    print('Updating user songs to database')
 
     table_name = DatabaseVar.user_songs_table
     main_col = 'user_id'
@@ -447,7 +332,7 @@ def update_user_profile_data(headers):
         #here !!!!! first check if song in songs database, if not then get data 
         if not mysql.check_in_table(songs_table, 'song_id', song['song_id']): #check if song in songs_table
 
-            print(f"{song['song_id']} not in database")
+            print(f"{song['song_id']} song not in database")
             res = insert_song_data(headers, song['song_id']) #insert song to database
 
             
@@ -463,11 +348,18 @@ def update_user_profile_data(headers):
         mysql.insert_mysql(table_name, song) #Now we add all info
 
 
+    print('Task done')
+
+    print('Updating albums database')
+
     update_albums_table_missing(headers) #this checks if new albums have been introduced and scrapes data
 
+    print('Task done')
+
+    print('Recreating artists community')
     net.create_community() #always update at every login. This could be optimized if new artist found by top artist or artist in top songs. Not that "easy" to do if in new songs , therefore we create community every time
 
-
+    print('Task done')
     
 
     return user_profile, user_top_songs
@@ -475,7 +367,7 @@ def update_user_profile_data(headers):
 
 
 def insert_new_artist(headers, artist):
-    print(f"{artist} not in database")
+    print(f"{artist} artist not in database")
     tmp_dict = get_info_artist(artist, headers)
     mysql.insert_mysql('artist', tmp_dict) #inserted into mysql table artist
     data = spotify.get_artist_related(artist, headers).get('artists') #list of artist related
@@ -890,9 +782,9 @@ def pick_genre_song_and_include(genre_profile, songs_array, my_playlist, output_
 
 
     my_playlist.append(song_selected)
-    print(song_selected, songs_array)
+
     songs_array = remove_match_song(songs_array, [song_selected]) # no need to go through all songs selected, just the one recently picked
-    print(song_selected, songs_array)
+ 
     song_name = list(mysql.get_name_song(song_selected))[0][0]
 
     user_id = songs_array[0,3]
@@ -957,26 +849,11 @@ def retrieve_mfccs_song(self, song_id):
     return mfcc_decoded
 
 
-def update_predictions_database(self):
-
-    data = np.array(list(self.mysql.get_all_songs('songs')))
-
-    for song in data:
-        song_id = song[0]
-
-        mfcc_decoded = audio.decode_mfccs(song[1], AudioVar.n_mfcc)
-
-        preds = mod.get_prediction_prob(self.model, mfcc_decoded)
-
-        genre = mod.find_genre_max(preds)
-
-        encoded_preds = mod.encode_prediction_prob(preds)
-
-        self.mysql.update_prediction(genre, encoded_preds, song_id)
 
 
 
-def create_mix_playlist(headers, num_songs, users):
+
+def create_mix_playlist(headers, users, num_songs =AudioVar.num_song_playlist):
     song_id_list, stats_playlist = get_list_selected_songs(num_songs, users)
 
     data = spotify.create_playlist(headers, users)
@@ -1088,7 +965,7 @@ def scrape_artists(self, seed_artist = None):
             data = self.spotify.get_artist_related(artist).get('artists') #list of artist related
 
             if data is None:
-                print(f'{artist} data not found.')
+                print(f'{artist} artist data not found.')
                 continue
 
             if self.mysql.check_in_table('artist_rel','main_id', artist):
@@ -1126,7 +1003,7 @@ def get_info_artist(artist_id, headers):
 
     data = spotify.get_artist_info(artist_id, headers)
 
-    print(data)
+ 
 
     tmp_dict = {}
 
@@ -1304,6 +1181,8 @@ def fecth_match_score(user_id, other_users_info):
 
 def get_info_distances_artist_ref(user):
 
+    print('Calculating distances for community')
+
     G = net.load_community()
 
     
@@ -1321,6 +1200,10 @@ def get_info_distances_artist_ref(user):
     min_path = list(map(extract_url_img_by_artist_name, min_path))
 
     ref_artist = Community.artist_ref_distance #to pass to app to show in html
+
+
+    print('Task done')
+
 
     
 
@@ -1352,19 +1235,28 @@ def find_matches_by_artist_for_playlist(user1, user2):
 
 def get_rating_popu_user(user):
 
+    print('Calculating popularity')
+
     songs = list(mysql.fetch_popularity(user))
     avg_pop = int(np.mean([song[1] for song in songs]))
 
     #con posibilidad de poder devolver el mayor popular
+
+    print('Task done')
     return avg_pop
 
 
 def get_years_user(user):
+
+    print('Calculating musical age')
+
     data = list(mysql.fetch_years_songs(user))
 
     list_dates = [item[0] for item in data]
 
     list_ages = list(map(extract_age_date, list_dates))
+
+    print('Task done')
 
     return round(np.mean(list_ages),1)
 
@@ -1435,7 +1327,7 @@ def collect_info_new_playlist(headers, song_id_list):
 
 def get_info_song_dict_by_id(song):
 
-    print(song)
+
 
     match = list(mysql.fetch_report_song(song))[0]
 
@@ -1555,11 +1447,11 @@ def create_audio(item):
 
     mp3_link =  item.get('preview_url')
 
-    audio._create_mp3_file(mp3_link, path_temp_mp3) #this creates mp3 file
+    audio._create_mp3_file(mp3_link, path_temp_mp3_video) #this creates mp3 file
     
-    audioclip = audio.create_clip(path_temp_mp3)
+    audioclip = audio.create_clip(path_temp_mp3_video)
     
-    os.remove(path_temp_mp3) #deleting used mp3 file
+    os.remove(path_temp_mp3_video) #deleting used mp3 file
 
     return audioclip
 
@@ -1572,16 +1464,3 @@ def create_video_clip(item, audioclip):
 
     return videoclip
 
-
-
-
-
-
-
-
-
-    
-
-
-
-    

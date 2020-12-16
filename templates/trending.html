@@ -166,38 +166,9 @@
         </style>
 
 
+{% extends "parent.html" %}
+{% block content %}
 
-
-<h1>SpotiFEAT <span>by Sergio González</span></h1>
-
-<input id="burger" type="checkbox" />
-
-<label for="burger">
-    <span></span>
-    <span></span>
-    <span></span>
-</label>
-
-<nav>    
-  <ul>
-    <li><a href="http://localhost:5000/stats">My Stats <span class="emoji">📈</span></a></li>
-    <li><a href="#">My Top50 Songs<span class="emoji">🔝</span></a></li>
-    <li><a href="#">My Trending Songs<span class="emoji">🔥</span></a></li>
-    <li><a href="http://localhost:5000/matches">My Matches<span class="emoji">🎯</span></a></li>
-    <li><a href="http://localhost:5000/select_members">Party Mode <span class="emoji">🎉</span></a></li>
-  </ul>  
-</nav>
-
-
-
-
-
-
- 
-
-
-    <body style="background-color:#000000; color: white; font-family: Gotham;
-    font-weight: bold;">
 
 
 <section style= "padding-top: 150px;">
@@ -230,12 +201,5 @@
     </section>
 
 
-      
 
-
-
-    </body>
-
-
-
-
+    {% endblock %}

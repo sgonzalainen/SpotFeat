@@ -15,6 +15,8 @@ db_name = 'spotify_project'
 password_mysql = os.getenv("MYSQL_PWD")
 user_mysql = os.getenv("MYSQL_USER")
 
+app_secret_key =  b'_5#y2L"F4Q8z\n\xec]/'
+
 
 
 

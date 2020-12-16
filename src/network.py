@@ -16,9 +16,9 @@ def create_community():
 
 
 
-def load_community():
+def load_community(path = Community.path_G):
 
-    G = nx.read_gpickle(Community.path_G)
+    G = nx.read_gpickle(path)
 
     return G
 

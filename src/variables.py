@@ -9,6 +9,7 @@ class AudioVar():
     hop_length = 512
     n_fft = 2048
     path_temp_mp3 = './data/temp_mp3/song_temp.mp3'
+    path_temp_mp3_video = './data/temp_mp3_video/song_temp.mp3'
 
     model_sample_sec = 9
 
@@ -16,6 +17,8 @@ class AudioVar():
 
 
     seconds_clip = 5
+
+    num_song_playlist = 50
 
 
 
@@ -40,7 +43,6 @@ class DatabaseVar():
     load_dotenv('src/.env')
 
     songs_table = 'songs'
-
 
     artist_table = 'artist'
 

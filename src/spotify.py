@@ -314,8 +314,8 @@ class SpotifyAdmin():
         super().__init__(*args, **kwargs)
         self.redirect_uri='https://www.google.com/'
         self.code=None
-        self.client_id='573199737d0a4ef3ba7b6773b857456f'
-        self.client_secret='5653391c69c5467e9f0ddd3885886b32'
+        self.client_id=client_id
+        self.client_secret=client_secret
         self.check_auth()
         
         

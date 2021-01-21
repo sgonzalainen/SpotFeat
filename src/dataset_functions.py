@@ -234,7 +234,7 @@ def collect_my_user_profile(headers):
         user_img_url = data['images'][0]['url'] #Keep first image
 
     except IndexError:
-        user_img_url ='../img/profile_none.png'
+        user_img_url ='' #this will change to predefined unkown pic in app
     
     finally:
 
@@ -1342,11 +1342,11 @@ def get_info_song_dict_by_id(song):
     album_img = match[4]
     preview_url = match[5]
 
-    if artist_img == '':
-        artist_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
+    #if artist_img == '':
+        #artist_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
 
     if album_img == '':
-        album_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png'
+        album_img = 'https://www.file-extensions.org/imgs/articles/4/375/unknown-file-icon-hi.png' #this link may have problems
 
 
     info_song = {'song_name': song_name, 'artist_name': artist_name, 'album_name': album_name, 'artist_img': artist_img, 'album_img': album_img, 'preview_url':preview_url }
@@ -1473,6 +1473,8 @@ def create_video(mytop_list):
 
         audioclip = create_audio(item)
         videoclip = create_video_clip(item, audioclip)
+        if videoclip is None: #if some error happen in video production
+            continue
         videoclips.append(videoclip)
 
 
@@ -1505,6 +1507,12 @@ def create_audio(item):
 def create_video_clip(item, audioclip):
 
     img_url = item.get('artist_img')
+
+    if img_url == '':
+
+        img_url = item.get('album_img')
+
+
 
     videoclip = audio.create_video_clip(img_url, audioclip)
 

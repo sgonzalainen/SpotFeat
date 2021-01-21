@@ -100,10 +100,19 @@ def create_clip(path_temp_mp3):
 
 def create_video_clip(img_url, audioclip):
 
+    
 
-    clip = mpy.ImageSequenceClip([img_url], durations =[AudioVar.seconds_clip])
+    try:
+        clip = mpy.ImageSequenceClip([img_url], durations =[AudioVar.seconds_clip])
 
-    videoclip = clip.set_audio(audioclip)
+    except:
+        print(f'{img_url} Error on this imageclip. Could not be created')
+        return None
+
+    else:
+
+        videoclip = clip.set_audio(audioclip)
+
 
     return videoclip
 

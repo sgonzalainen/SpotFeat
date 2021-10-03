@@ -36,6 +36,9 @@ def background_video(headers):
 
 @app.route('/')
 def index():
+    '''
+    Landing page endpoint
+    '''
 
     session['access_token'] = None
     session['access_token_expires'] = datetime.datetime.now()
@@ -46,7 +49,10 @@ def index():
 
 @app.route('/start')
 def start():
-    r = spot.get_auth()
+    '''
+    Landing page after clicking on start button
+    '''
+    r = spot.get_auth() #this will call to get authentication for Spotify for later callback endpoint
 
     return f""
 
@@ -54,13 +60,17 @@ def start():
 
 @app.route('/callback')
 def callback():
+    '''
+    Endpoint for receive callbacks with code to exchange for access token
+    
+    '''
 
-    code = request.args.get('code', -1) #this is optional
+    code = request.args.get('code', -1) #this is the code from callback
 
    
 
 
-    answer = spot.get_first_token(code)
+    answer = spot.get_first_token(code) #this is the access token
 
  
 
@@ -78,6 +88,10 @@ def callback():
 
 @app.route('/intro')
 def intro():
+    '''
+    Main endpoint after authentication and data scraping done.
+    It calculates all users statistics for better performance after first loading
+    '''
 
     
     
@@ -85,7 +99,7 @@ def intro():
     
     
 
-    #background pseudo thread
+    #background  thread to start creating the top50 video
     thread = Thread(target=background_video, args=(headers,))
     thread.daemon = True
 

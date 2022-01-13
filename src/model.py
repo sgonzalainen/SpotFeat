@@ -96,6 +96,15 @@ def plot_history(history):
 
 
 def get_prediction_prob(model, mfcc):
+    '''
+    Predicts genre song based on mfccs array
+    Args:
+        model(object): trained tensorflow model
+        mfcc(array): mfccs coefficients to be fed to neural network
+    Returns:
+        preds(list): list of predictions
+    
+    '''
 
     mfcc_inputs = np.array(audio.split_mfcc(mfcc))
     mfcc_inputs = mfcc_inputs[..., np.newaxis]
@@ -107,12 +116,23 @@ def get_prediction_prob(model, mfcc):
 
 def encode_prediction_prob(preds):
     '''
-    input array
+    Encodes to single string a list of predictions to save to database model.
+    Args:
+        preds(list): list of predictions
+    Returns:
+        single string with all predictions, space separated.
     '''
     return ' '.join(str(val)for val in preds)
 
 
 def find_genre_max(preds):
+    '''
+    Returns genre with max probabilities based on model prediction
+    Args:
+        preds(list): list of predictions
+    Returns:
+        genre(str): music genre predicted
+    '''
 
     ind = preds.argmax()
 

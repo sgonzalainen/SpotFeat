@@ -16,20 +16,26 @@ app.secret_key = app_secret_key
 
 
 def background_video(headers):
+    '''
+    Starts in the background a new thread making the mixtape video of top songs
+    Args:
+        headers(dict): headers for spotify api
     
-    file = open("data/working.txt", "w") 
+    '''
+    
+    file = open("data/working.txt", "w") #singal video is being generated
 
     print('Video is being generated in the background')
 
-    mytop_list = dataset.get_my_top(headers)
+    mytop_list = dataset.get_my_top(headers) #gets list of top songs ids
 
-    myvideo = dataset.create_video(mytop_list)
+    myvideo = dataset.create_video(mytop_list) #creates mixtape video
 
-    myvideo.write_videofile("static/movie.mp4", fps=24)
+    myvideo.write_videofile("static/movie.mp4", fps=24) #saves the video in static folder
 
     print('Video has been created')
 
-    os.remove("data/working.txt")
+    os.remove("data/working.txt") #signal video has been created
     
 
 
@@ -40,6 +46,7 @@ def index():
     Landing page endpoint
     '''
 
+    #initialization of session variables
     session['access_token'] = None
     session['access_token_expires'] = datetime.datetime.now()
     session['refresh_token'] = None
@@ -50,7 +57,7 @@ def index():
 @app.route('/start')
 def start():
     '''
-    Landing page after clicking on start button
+    After clicking on start button, it redirects to login spotify page
     '''
     r = spot.get_auth() #this will call to get authentication for Spotify for later callback endpoint
 
@@ -67,19 +74,16 @@ def callback():
 
     code = request.args.get('code', -1) #this is the code from callback
 
-   
-
-
-    answer = spot.get_first_token(code) #this is the access token
+    answer = spot.get_first_token(code) #this returns info with access token
 
  
-
+    #saving of spotify access token
     session['access_token'] = answer[0]
     session['access_token_expires'] = answer[2]
     session['refresh_token'] = answer[1]
     session['access_token_did_expire'] = answer[3]
 
-    return render_template('loading.html')
+    return render_template('loading.html') #this html redirects automatically to endpoint /intro
 
 
 
@@ -94,7 +98,7 @@ def intro():
     '''
 
     
-    
+    #update of headers for spotify api
     headers, access_token, access_token_expires = spot.get_resource_header(session['access_token'], session['access_token_expires'], session['refresh_token'])
     
     

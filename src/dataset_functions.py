@@ -49,11 +49,16 @@ def get_info_song(data, file_path):
 
 
     '''
-    data = my_spot._get_json_song(song_id)
+    Based on song raw data, it cleans and enriches song data (like song genre)
+    Args:
+        data(dict): song raw data
+        file_path(str): path to save temporarily song audio
+    Returns:
+        song_dict(dict): dictionary containing enriched and cleaned info of a song to be injected to database
+        artist_song_list(list): list of pair artist_id and song_id to be injected to database
+
 
     '''
-    
-    
     
     song_dict = {}
 
@@ -71,14 +76,12 @@ def get_info_song(data, file_path):
     
     mp3_link = data['preview_url']
 
-    ## algunas veces no hay link
 
-    #print('a',mp3_link,data['id'])
-    song_dict ['mfccs'], mfccs_array = get_mfccs(mp3_link, file_path)
+    song_dict ['mfccs'], mfccs_array = get_mfccs(mp3_link, file_path) #extracts mfccs array for song
 
-    preds = mod.get_prediction_prob(model, mfccs_array)
+    preds = mod.get_prediction_prob(model, mfccs_array) #predicts song genre based on mfccs
     genre = mod.find_genre_max(preds)
-    encoded_preds = mod.encode_prediction_prob(preds)
+    encoded_preds = mod.encode_prediction_prob(preds) #encodes prediction to save as well to database
 
     song_dict['genre_model'] = genre
     song_dict['model_pred'] = encoded_preds
@@ -95,12 +98,23 @@ def get_info_song(data, file_path):
 
 
 def get_mfccs(mp3_link, file_path):
+    '''
+    Extracts mfccs array for a given mp3 link
+    Args:
+        mp3_link(str): preview url for song
+        file_path(str): temporary directory to save song audio
+
+    Returns:
+        mfccs_array(array): array of mfccs
+        mfccs(str): mfccs encoded in single string
+    
+    '''
     
     audio._create_mp3_file(mp3_link, file_path) #this creates mp3 file
     
-    mfccs_array = audio._extract_mfccs(file_path)
+    mfccs_array = audio._extract_mfccs(file_path) #creates mfccs array
     
-    mfccs = audio.encode_mfccs(mfccs_array)
+    mfccs = audio.encode_mfccs(mfccs_array) #encodes array to single string to be saved to database
     
     os.remove(file_path) #deleting used mp3 file
     
@@ -109,24 +123,30 @@ def get_mfccs(mp3_link, file_path):
 
 
 def insert_song_data(headers, song_id, col_name = 'song_id'):
+    '''
+    Insert new song to database
+    Args:
+        song_id(str): song id
+    
+    '''
 
     table_name = songs_table
     
     
-    if mysql.check_in_table(table_name,col_name, song_id):
+    if mysql.check_in_table(table_name,col_name, song_id):#double check if song in database then do nothing
         
         pass
     else:
-        data = spotify._get_json_song(headers,song_id)
+        data = spotify._get_json_song(headers,song_id) # raw data of a song
 
         
 
-        if (data['preview_url'] is None):
+        if (data['preview_url'] is None): #checks if it finds preview url
             print('Preview url null. Finding through markets a previeuw url')
-            for country in markets:
+            for country in markets: #if no preview url found, then iterates through differnt markets to find preview url
                 print(f'Trying {country}')
-                data = spotify._get_json_song(headers, song_id, country)
-                if not (data['preview_url'] is None):
+                data = spotify._get_json_song(headers, song_id, country) #new try raw data
+                if not (data['preview_url'] is None): #finds preview url
                     print('Preview url found', data['preview_url'])
 
                     break
@@ -141,7 +161,7 @@ def insert_song_data(headers, song_id, col_name = 'song_id'):
         data['id'] = song_id #this change needed to solve problem with ids non playalbe and relinked. with this solution we may have same songs with two entries with different ids          
 
 
-        data, data2 = get_info_song(data, path_temp_mp3)
+        data, data2 = get_info_song(data, path_temp_mp3) #data is song_dict and data2 is artist_song_id info
         mysql.insert_mysql('songs',data)
 
         new = False
@@ -190,6 +210,7 @@ def get_my_full_top_50(headers):
     for song in sum_list:
         
         score = 0
+        #factors to multiply each time range
         factor_long = 1
         factor_medium = 1
         factor_short = 1
@@ -217,14 +238,21 @@ def get_my_full_top_50(headers):
 
 def collect_my_user_profile(headers):
     '''
-    Collects userful profile information about the user 
+    Collects useful profile information about the user, e.g. user info, top songs, top artists
+    Args:
+        headers(dict): spotify api headers
+    Returns:
+        temp_dict_user (dict): user info, i.e. name, country, num of followers and img url
+        temp_list_top_songs(list): list of top songs to be injected to database. Userid, song id and its score
+        temp_list_top_artists (list): list of top artist
+
 
 
     '''
     temp_dict_user = {}
     temp_list_top_songs = []
 
-    data = spotify.get_my_user_info(headers)
+    data = spotify.get_my_user_info(headers) #request to spotify api with raw data
 
     user_id = data['id']
     user_country = data['country']
@@ -238,7 +266,7 @@ def collect_my_user_profile(headers):
     
     finally:
 
-        top50 = get_my_full_top_50(headers)
+        top50 = get_my_full_top_50(headers) #get info related to top50 songs for all time ranges
 
 
         temp_dict_user = {'user_id': user_id,
@@ -260,10 +288,14 @@ def collect_my_user_profile(headers):
 
 
 def update_user_profile_data(headers):
+    '''
+    After user login, this scrapes and updates user info to databases.
+    
+    '''
 
 
     print('Scraping data of login user')
-    user_profile, user_top_songs, user_top_artists = collect_my_user_profile(headers)
+    user_profile, user_top_songs, user_top_artists = collect_my_user_profile(headers) #user data, top songs info to be injected to database and top artists
 
     user_id = user_profile['user_id']
     table_name = DatabaseVar.user_table
@@ -274,14 +306,14 @@ def update_user_profile_data(headers):
     ##Update users table
     print('Updating user info to database')
 
-    if mysql.check_in_table(table_name, main_col, user_id):
+    if mysql.check_in_table(table_name, main_col, user_id): #checks if user already in user table
 
         for key, value in user_profile.items():
             if key != 'user_id':
-                mysql.update_database(table_name, main_col, key, user_id, value)
+                mysql.update_database(table_name, main_col, key, user_id, value) #updates all fields with new data. #this may be optimized and only update if changes present
             else:
                 pass
-    else:
+    else: #new user ever
         mysql.insert_mysql(table_name, user_profile)
 
     print('Task done')
@@ -290,12 +322,12 @@ def update_user_profile_data(headers):
     
     print('Updating user artists to database')
 
-    if mysql.check_in_table('user_artist', 'user_id', user_id):
-        mysql.delete_where('user_artist', user_id, 'user_id') #delete
+    if mysql.check_in_table('user_artist', 'user_id', user_id): #checks if user is already in user_artist table
+        mysql.delete_where('user_artist', user_id, 'user_id') #deletes old info
     else:
         pass
 
-    new = False
+    new = False #initial value 
 
     for artist in user_top_artists:
 
@@ -306,7 +338,7 @@ def update_user_profile_data(headers):
             pass
 
         data  = {'user_id': user_id, 'artist_id': artist}
-        mysql.insert_mysql('user_artist', data)
+        mysql.insert_mysql('user_artist', data) #insertes to mysql the favourtie artist for user
 
     print('Task done')
         
@@ -369,6 +401,12 @@ def update_user_profile_data(headers):
 
 
 def insert_new_artist(headers, artist):
+    '''
+    Insert new artist in database
+    Args:
+        artist(str): artist id
+    '''
+
     print(f"{artist} artist not in database")
     tmp_dict = get_info_artist(artist, headers)
     mysql.insert_mysql('artist', tmp_dict) #inserted into mysql table artist
@@ -694,80 +732,6 @@ def translate_user_id(user_id):
 
 
 
-
-
-
-
-'''
-
-def find_songs_playlist(user1, user2):
-
-    num_songs = 40 #to be modifieeddddddddddddddddddddddddddddddddddddddddddddd
-
-    my_playlist = []
-    output_txt = []
-
-    ######## COMMON SONGS ############################
-    songs_match_top = [row[0] for row in list(mysql.songs_match_between_users(user1, user2, 'user_song', num_songs))]
-
-    my_playlist.extend(songs_match_top)
-
-    for song in my_playlist:
-        song_name = list(mysql.get_name_song(song))[0][0] #this could be refactorize and get from previous request to mysql
-        output_txt.append(f'{song_name} selected due to match in TOP songs')
-
-    ### COMMON RESPECT TO ARTIST ###########################
-
-    matches_artist1 = find_matches_by_artist_for_playlist(user1, user2)
-    for match in matches_artist1:
-        my_playlist.append(match[2])
-        output_txt.append(f'{match[1]} by {match[0]} selected from {user2} songs due to match in Top artist of {user1}')
-
-
-    matches_artist2 = find_matches_by_artist_for_playlist(user2, user1)
-    for match in matches_artist2:
-        my_playlist.append(match[2])
-        output_txt.append(f'{match[1]} by {match[0]} selected from {user1} songs due to match in Top artist of {user2}')
-
-    
-
-
-    user1_genre_profile = np.array(list(mysql.find_user_all_songs_genre(user1)))
-    user1_genre_profile = calc_user_profile_genre(user1_genre_profile)  
-
-    user2_genre_profile = np.array(list(mysql.find_user_all_songs_genre(user2)))
-    user2_genre_profile = calc_user_profile_genre(user2_genre_profile)  
-
-
-
-    user1_info = np.array(list(mysql.find_user_all_songs_ids(user1)))
-    user2_info = np.array(list(mysql.find_user_all_songs_ids(user2)))
-
-
-    user1_remain = remove_match_song(user1_info, songs_match_top)
-    user2_remain = remove_match_song(user2_info, songs_match_top)
-    
-    count =0
-    
-    while len(my_playlist) < num_songs:
-        if count % 2 == 0:
-
-            my_playlist, output_txt, user2_remain, check = pick_genre_song_and_include(user1_genre_profile, user2_remain, my_playlist, output_txt)
-        else:
-            my_playlist, output_txt, user1_remain, check = pick_genre_song_and_include(user2_genre_profile, user1_remain, my_playlist, output_txt)
-
-        if check:
-            pass
-        else:
-            return my_playlist, output_txt
-
-        count += 1
-
-    return my_playlist, output_txt
-
-'''
-
-
 def pick_genre_song_and_include(genre_profile, songs_array, my_playlist, output_txt):
 
     try_count = 0
@@ -869,22 +833,6 @@ def create_mix_playlist(headers, users, num_songs =AudioVar.num_song_playlist):
 
 
 
-
-
-'''
-def create_mix_playlist(user1, user2, headers):
-    song_id_list, txt_output = find_songs_playlist(user1, user2)
-
-    data = spotify.create_playlist(user1,user1,user2, headers)
-
-    playlist_id = data['id']
-
-    spotify.add_songs_to_playlist(playlist_id, song_id_list, headers)
-    create_output_file(user1, txt_output)
-
-    return txt_output
-
-'''
 
 
 
@@ -1003,6 +951,9 @@ def scrape_artists(self, seed_artist = None):
 
 
 def get_info_artist(artist_id, headers):
+    '''
+    Fetches from spotify api info related to artist and returns artist info in format to be inserted to database
+    '''
 
     data = spotify.get_artist_info(artist_id, headers)
 
@@ -1085,8 +1036,8 @@ def get_my_matches(main_user):
 
     
 
-    scores_by_distance = get_score_by_distance(main_user, other_users)
-    scores_by_genre = get_score_by_genres(main_user, other_users)
+    scores_by_distance = get_score_by_distance(main_user, other_users) #mathces info by distance between top artist
+    scores_by_genre = get_score_by_genres(main_user, other_users) #matches between genres
 
     mean_score = list(map(lambda x,y: round(np.mean([x,y]) * 100 if not np.isnan(x) else y * 100, 1), scores_by_distance, scores_by_genre))
 
@@ -1405,6 +1356,10 @@ def get_my_top(headers):
 
 
 def update_albums_table_missing(headers):
+    '''
+    Checks if new albums have been introduced and scrapes data
+    
+    '''
 
     albums_to_scrape = [album[0] for album in list(mysql.fetch_album_in_songs_null())]
 
@@ -1432,6 +1387,9 @@ def update_albums_table_missing(headers):
 
 
 def update_missing_artists(headers):
+    '''Checks if some artist is missing in table for some trailing error'''
+
+
     artist_to_scrape = [artist[0] for artist in list(mysql.fetch_artist_in_songs_null())]
 
     for artist in artist_to_scrape:
@@ -1461,10 +1419,12 @@ def update_missing_artists(headers):
 
 
 
-
-
-
 def create_video(mytop_list):
+    '''
+    Main function to creates video mix tape based on top songs
+    Args:
+        mytop_list(list): list of top song ids
+    '''
 
 
     videoclips = []

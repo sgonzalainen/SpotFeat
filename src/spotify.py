@@ -12,6 +12,9 @@ dotenv.load_dotenv()
 
 
 def get_auth():
+    '''
+    Calls for user login in order to get later access token
+    '''
 
     
     mother_link = "https://accounts.spotify.com/authorize"
@@ -30,6 +33,10 @@ def get_auth():
     
 
 def get_first_token(code):
+
+    '''
+    Fetches Spotify access token after code received in callback endpoint
+    '''
 
     mother_link='https://accounts.spotify.com/api/token'
     key={'code':code,
@@ -63,6 +70,9 @@ def get_first_token(code):
 
 
 def get_resource_header(access_token, access_token_expires , refresh_token):
+    '''
+    Generate header for any Spotify API request
+    '''
     access_token, access_token_expires = get_access_token(access_token, access_token_expires, refresh_token)
     headers = {
         "Authorization": f"Bearer {access_token}"
@@ -71,6 +81,10 @@ def get_resource_header(access_token, access_token_expires , refresh_token):
 
 
 def get_access_token(access_token, access_token_expires, refresh_token):
+
+    '''
+    Checks if current access token is expired, and if so, gets new access token with refresh token
+    '''
 
     now = datetime.datetime.now()
     if access_token_expires < now:
@@ -81,6 +95,14 @@ def get_access_token(access_token, access_token_expires, refresh_token):
 
 
 def update_token(refresh_token):
+    '''
+    Gets new access token in case old access token is expired.
+    Args:
+        refresh_token (str): refresh token
+    Return:
+        access_token(str): new access token ready to use
+        access_token_expires (datetime): time when new access token expires
+    '''
     mother_link='https://accounts.spotify.com/api/token'
     key={"grant_type": "refresh_token",
             "client_id": client_id,"client_secret": client_secret,
@@ -126,6 +148,9 @@ def get_top_50(time_range, headers, limit=50):
         limit(int): number of top song. By default,50. Spotify limits number to 50,
         if more than 50 is required, several requests should be perform with an offset.
         Here only 50.
+
+    Returns:
+        top_50_list(list): list of song ids
     
     '''
     
@@ -172,6 +197,15 @@ def _get_json_song(headers, song_id, country = None):
     return r.json()
 
 def create_playlist(headers, users):
+    '''
+    Creates playlist for a specific user
+    Args:
+        headers (dict) : spotify api headers
+        users(list): list of user ids for party playlist. first userid is the login user.
+    Returns (json): json with generated playlist
+
+    
+    '''
 
     user_id = users[0]
 
@@ -189,6 +223,15 @@ def create_playlist(headers, users):
     return r.json()
 
 def add_songs_to_playlist(playlist_id, song_id_list, headers):
+    '''
+    Add songs to a specific playlist
+    Args:
+        playlist_id (str) : specific playlist id
+        song_id_list(list): list of song ids to add to playlist
+    Returns (json): json with request response
+
+
+    '''
 
     #entra lista de ids a meter de golpe
 
@@ -212,6 +255,13 @@ def add_songs_to_playlist(playlist_id, song_id_list, headers):
 def get_user_top_artist(headers, limit=20, time_range = 'long_term'):
     
     '''
+    Fetches login user most favourite artist based on specific time range
+    Args:
+        time_range(str): Either 'short_term', 'medium_term' or 'long term'
+        limit(int): number of top artists. By default,20.
+
+    Returns:
+        top_list(list): list of artist ids
 
     '''
     
@@ -236,6 +286,16 @@ def get_user_top_artist(headers, limit=20, time_range = 'long_term'):
 
 def get_artist_related(artist_id, headers):
 
+    '''
+    Fetches from spotify api info related to artists related to a specific artist
+    Args:
+        artist_id(str): specific artist id
+
+    Returns:
+        Returns (json): json with request response
+
+    '''
+
     endpoint = f'https://api.spotify.com/v1/artists/{artist_id}/related-artists'
     
 
@@ -245,6 +305,17 @@ def get_artist_related(artist_id, headers):
 
 
 def get_artist_info(artist_id, headers):
+
+    '''
+    Fetches from spotify api info related to a specific artist
+    Args:
+        artist_id(str): specific artist id
+
+    Returns:
+        Returns (json): json with request response
+
+    '''
+
 
     endpoint = f'https://api.spotify.com/v1/artists/{artist_id}'
     
@@ -256,44 +327,44 @@ def get_artist_info(artist_id, headers):
 
 def get_album_info(headers, album_id):
 
-        endpoint = f'https://api.spotify.com/v1/albums/{album_id}'
+    endpoint = f'https://api.spotify.com/v1/albums/{album_id}'
 
-        r = requests.get(endpoint,headers=headers)
+    r = requests.get(endpoint,headers=headers)
 
-        return r.json()
+    return r.json()
 
 
 def check_follow(headers, user_id):
 
-        endpoint = f'https://api.spotify.com/v1/me/following/contains'
+    endpoint = f'https://api.spotify.com/v1/me/following/contains'
 
-        params = {'type': 'user', 'ids': user_id}
+    params = {'type': 'user', 'ids': user_id}
 
-        r = requests.get(endpoint,headers=headers, params = params)
+    r = requests.get(endpoint,headers=headers, params = params)
 
-        return r.json()
+    return r.json()
 
 
 def follow_user(headers, user_id):
 
-        endpoint = f'https://api.spotify.com/v1/me/following'
+    endpoint = f'https://api.spotify.com/v1/me/following'
 
-        params = {'type': 'user', 'ids': user_id}
+    params = {'type': 'user', 'ids': user_id}
 
-        r = requests.put(endpoint,headers=headers, params = params)
+    r = requests.put(endpoint,headers=headers, params = params)
 
-        return r
+    return r
 
 
 def unfollow_user(headers, user_id):
 
-        endpoint = f'https://api.spotify.com/v1/me/following'
+    endpoint = f'https://api.spotify.com/v1/me/following'
 
-        params = {'type': 'user', 'ids': user_id}
+    params = {'type': 'user', 'ids': user_id}
 
-        r = requests.delete(endpoint,headers=headers, params = params)
+    r = requests.delete(endpoint,headers=headers, params = params)
 
-        return r
+    return r
 
 
 

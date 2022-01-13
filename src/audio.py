@@ -30,8 +30,19 @@ def _create_mp3_file( mp3_link, path_temp_mp3):
 
 
 def _extract_mfccs(path_temp_mp3, sample_rate = sample_rate, n_mfcc = n_mfcc, hop_length = hop_length, n_fft = n_fft):
+
     '''
-    
+    Extracts mfccs coefficients for the audio donwloaded before
+    Args:
+        path_temp_mp3(str): temporary directory where mp3 file is stored
+        sample_rate(int): settings to extract mfccs
+        n_mfcc(int): number of coefficients
+        hop_length(int): settings to extract mfccs
+        n_fft(int): settings to extract mfccs
+
+    Returns:
+        mfcc(array): array with coefficients
+
     '''
 
 
@@ -41,6 +52,14 @@ def _extract_mfccs(path_temp_mp3, sample_rate = sample_rate, n_mfcc = n_mfcc, ho
     return mfcc
 
 def encode_mfccs(mfccs):
+    '''
+    Encodes mfccs array to string to save in database
+    Args:
+        mfccs(array): array of mfccs coefficients
+    Returns:
+        string(str): encoded string of mfccs
+    
+    '''
     string = '_'.join(str(item) for row in mfccs for item in row)
     
     return string

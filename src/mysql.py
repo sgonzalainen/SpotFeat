@@ -33,9 +33,10 @@ class MysqlConn():
     def insert_mysql(self, table_name, info):
 
         '''
+        New info to be inserted in a specific table in mysql
         Args:
-            table_name(str)
-            info(dict)
+            table_name(str): name of the table to be injected to
+            info(dict): info to be injected
 
         '''
 
@@ -50,6 +51,15 @@ class MysqlConn():
 
 
     def check_in_table(self,table_name,column, _id):
+        '''
+        Checks if certain value is present in a specific table for a specific table
+        Args:
+            table_name(str): name of table
+            column(str): name of column
+            _id: value to be check in column
+        Returns:
+            True or False
+        '''
 
 
         query = f"(SELECT {column} FROM {table_name} WHERE {column} = '{_id}');"
@@ -63,6 +73,17 @@ class MysqlConn():
 
 
     def update_database(self, table_name, id_col, field_col, _id, value):
+
+        '''
+        Updates mysql database given a table, id col , column to modify and new value to be inserted.
+        Args:
+            table_name(str): name of table to be modified
+            id_col(str): column which identifies the row to be modified
+            field_col(str): column to be modified
+            _id(str): vale of the identity to be match in id_col
+            value(str): value to be updated in field_col
+
+        '''
 
         query = f"UPDATE {table_name} SET {field_col} = '{value}' WHERE {id_col} = '{_id}';"
         self.conn.execute(query)
@@ -82,6 +103,13 @@ class MysqlConn():
     
 
     def delete_where(self, table_name, _id, id_col):
+        '''
+        Deletes information from table in database where value is equals to something
+        Args:
+            table_name(str): name of table
+            _id(str): target value
+            id_col(str): column to match in where clause
+        '''
 
         query = f"DELETE FROM {table_name} WHERE {id_col} ='{_id}';"
         
@@ -232,6 +260,9 @@ class MysqlConn():
         return self.conn.execute(query)
 
     def fetch_album_in_songs_null(self):
+        '''
+        Fethces albums that are missing in albums table
+        '''
         
         query = f"SELECT DISTINCT(a.album_id) FROM songs a LEFT JOIN albums b ON a.album_id = b.album_id WHERE b.name IS NULL;"
 
